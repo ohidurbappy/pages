@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ULKASEMI Sample Screening Set</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    max-width: 780px; margin: 0 auto; padding: 24px 18px 80px;
+    font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    color: #1a1a1a; background: #fff;
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: #666; margin: 0 0 24px; font-size: 0.9rem; }
+  .controls { margin: 0 0 8px; }
+  button {
+    font: inherit; font-size: 0.9rem; cursor: pointer;
+    padding: 6px 14px; border: 1px solid #999; border-radius: 6px; background: #f4f4f4;
+  }
+  button:hover { background: #e8e8e8; }
+  h2 { font-size: 1.05rem; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #1a1a1a; }
+  .q { margin: 0 0 20px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+  .q-prompt { margin: 0 0 10px; }
+  .q-num { font-weight: 700; }
+  .q-prompt em { color: #666; }
+  ol.opts { margin: 0 0 10px; padding-left: 1.5em; }
+  ol.opts li { margin: 3px 0; }
+  code { background: #f2f2f2; padding: 1px 4px; border-radius: 3px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+  pre { background: #f6f6f6; padding: 12px 14px; border-radius: 6px; overflow-x: auto;
+    font-size: 0.85rem; line-height: 1.45; border: 1px solid #e5e5e5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 10px 0; }
+  pre code { background: none; padding: 0; }
+  table.kmap { border-collapse: collapse; margin: 10px 0;
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9rem; }
+  table.kmap th, table.kmap td { border: 1px solid #999; width: 46px; height: 34px; text-align: center; }
+  table.kmap thead th { background: #f0f0f0; }
+  table.kmap td.one { background: #eaeaea; font-weight: 700; }
+  .toggle { font: inherit; font-size: 0.85rem; cursor: pointer; color: #0645ad;
+    background: none; border: none; padding: 0; text-decoration: underline; }
+  .ans { display: none; margin: 10px 0 0; padding: 10px 14px;
+    background: #f6f8f6; border-left: 3px solid #2e7d32; border-radius: 0 4px 4px 0; }
+  .ans.show { display: block; }
+  .ans .correct { font-weight: 700; }
+  .ans .exp { margin: 6px 0 0; font-size: 0.94rem; color: #333; }
+  @media print { .controls, .toggle { display: none; } .ans { display: block !important; } .q { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<h1>ULKASEMI Sample Screening Set</h1>
+<p class="sub">Silicon Engineering trainee &mdash; 29 practice questions with worked answers.</p>
+<div class="controls"><button id="toggleAll">Reveal all answers</button></div>
+<main id="root"></main>
+
+<script>
+const KMAP = `
+<table class="kmap">
+<thead><tr><th>A\\BC</th><th>00</th><th>01</th><th>11</th><th>10</th></tr></thead>
+<tbody>
+<tr><th>0</th><td>0</td><td class="one">1</td><td>0</td><td>0</td></tr>
+<tr><th>1</th><td>0</td><td class="one">1</td><td>0</td><td class="one">1</td></tr>
+</tbody></table>`;
+
+const DATA = [
+{
+  title:"Digital Logic Design & Analysis",
+  items:[
+    { prompt:`A two-input gate has an inverting output bubble. Its inputs are the constant <code>0</code> and signal <code>A</code>. What is output <code>Y</code>? <em>(The gate is a NOR gate.)</em>`,
+      opts:["A","1","0","!A"], correct:3,
+      exp:`A NOR gate gives <code>Y = (0 + A)′</code>. OR-ing with 0 leaves <code>A</code> unchanged, and the bubble inverts it — so <code>Y = !A</code>.` },
+    { prompt:`Three 2-input XOR gates are cascaded. The first gate receives the constant <code>1</code> and signal <code>X</code>; each later gate XORs the previous output with <code>X</code> again. What is <code>Y</code>?`,
+      opts:["X","0","!X","1"], correct:2,
+      exp:`<code>Y = ((1⊕X)⊕X)⊕X</code>. Step by step: <code>1⊕X = X′</code>, then <code>X′⊕X = 1</code>, then <code>1⊕X = X′</code>. So <code>Y = !X</code>.` },
+    { prompt:`A Mealy machine has edges (in/out): A→A 0/0, A→B 1/0, B→B 1/0, B→C 0/0, C→B 1/1, C→A 0/0. With A as the start state, which state is unreachable?`,
+      opts:["A","C","B","None of the above"], correct:3,
+      exp:`From A, input 1 reaches B; from B, input 0 reaches C. Every state is reachable, so none is unreachable.` },
+    { prompt:`A 1-to-4 demultiplexer routes input <code>X</code> to outputs A, B, C, D using selects {S1, S0}. Only S0 is driven — S1 is tied to ground. Which outputs can never be activated?`,
+      opts:["A & B","B & C","B & D","C & D"], correct:3,
+      exp:`With S1 forced to 0, only codes 00 (→A) and 01 (→B) can occur. Codes 10 (→C) and 11 (→D) need S1 = 1, so <b>C &amp; D</b> never activate.` },
+    { prompt:`One signal <code>A</code> feeds a 1:2 demultiplexer; its two outputs feed a 2:1 multiplexer. The demux and mux share the same select line. What is the behaviour from <code>A</code> to <code>Y</code>?`,
+      opts:["XOR","Buffer","Inverter","Decoder"], correct:1,
+      exp:`For either select value, the demux places <code>A</code> on exactly the line the mux then selects, so <code>Y = A</code> always — a pass-through <b>buffer</b>.` },
+    { prompt:`Which gate combination checks whether two 8-bit values are identical?`,
+      opts:["XNOR and OR","XOR and AND","XOR and OR","XNOR and AND"], correct:3,
+      exp:`XNOR each bit pair (1 when the bits match), then AND all eight results. The AND is 1 only when every bit matches — an equality comparator.` },
+    { prompt:`Simplify the function <code>F</code> from this K-map:` , figure:KMAP,
+      opts:["ABC' + B'C","B'C + AC'","B'C + A","A'C + AB"], correct:0,
+      exp:`The two 1s in column <code>BC=01</code> (both rows of A) group to <code>B'C</code>. The isolated 1 at <code>A=1, BC=10</code> is <code>ABC'</code>. So <code>F = ABC' + B'C</code>.` },
+    { prompt:`A circuit computes <code>Y = (A⊕B) · (B⊕C)′</code> (two XORs, the second inverted, into an AND). Which input <code>(A,B,C)</code> makes <code>Y = 1</code>?`,
+      opts:["011","001","111","101"], correct:0,
+      exp:`<code>Y = 1</code> needs <code>A⊕B = 1</code> (A ≠ B) and <code>B⊕C = 0</code> (B = C). For <code>011</code>: A=0, B=1, C=1 → A≠B ✓ and B=C ✓, so <code>Y = 1</code>.` },
+    { prompt:`Which circuit is described by <code>F = I₀·S̄ + I₁·S</code>?`,
+      opts:["XOR Gate","Tri-State Buffer","XNOR Gate","Multiplexer"], correct:3,
+      exp:`When <code>S=0</code>, <code>F=I₀</code>; when <code>S=1</code>, <code>F=I₁</code>. Selecting one of two inputs by a control line is a 2:1 <b>multiplexer</b>.` },
+    { prompt:`From the timing diagram, output <code>Out</code> is low only when <code>X=0</code> and <code>Y=1</code>, and high otherwise. What is the minimal product-of-sums (POS)?`,
+      opts:["X + Y'","X' + Y","(XY)' + X","X' + Y'"], correct:0,
+      exp:`<code>Out = 0</code> at the single combination <code>X=0, Y=1</code>, giving one maxterm <code>(X + Y′)</code> — already the minimal POS.` },
+  ]
+},
+{
+  title:"Analog & Circuit Analysis",
+  items:[
+    { prompt:`In DC steady state, what is the potential difference across an ideal inductor (1 mH) carrying a constant current in a 1.8 V resistive network?`,
+      opts:["1.8 V","0.0 V","0.6 V","1.2 V"], correct:1,
+      exp:`<code>V_L = L·(di/dt)</code>. In DC steady state the current is constant, so <code>di/dt = 0</code> and the ideal inductor drops <b>0 V</b> (acts as a short).` },
+    { prompt:`Two ideal current sources (2 mA and 4 mA) push current into a node whose only return path to ground is a 1 kΩ resistor (2 kΩ and 3 kΩ sit in the source branches). Find the voltage across the 1 kΩ.`,
+      opts:["1.0 V","3.0 V","6.0 V","4.0 V"], correct:2,
+      exp:`Ideal current sources fix their branch currents regardless of series resistance, so <code>2 + 4 = 6 mA</code> flows through the 1 kΩ. <code>V = 6 mA × 1 kΩ = 6 V</code>.` },
+    { prompt:`A 5 V source drives a network through an ideal diode. R1 (1 kΩ) is directly across the source; R2 and R3 (1 kΩ each) sit behind the diode, which is reverse-biased. Find V across R3 and current through R1.`,
+      opts:["1 V, 2.5 mA","4.3 V, 4.3 mA","0 V, 5 mA","5 V, 10 mA"], correct:2,
+      exp:`The reverse-biased ideal diode is an open circuit, so no current reaches R3 → <code>V(R3) = 0 V</code>. R1 sits straight across 5 V → <code>I = 5 V / 1 kΩ = 5 mA</code>.` },
+    { prompt:`At a node, current <code>i1</code> flows in while <code>i2, i3, i4, i5</code> all flow out. Which KCL equation holds?`,
+      opts:["i4 + i1 = i2 + i3 + i5","i1 + i2 + i3 = i5 + i4","i1 + i3 = i4 + i2 + i5","i1 = i2 + i3 + i4 + i5"], correct:3,
+      exp:`KCL: current in = current out. Only <code>i1</code> enters; <code>i2, i3, i4, i5</code> leave → <code>i1 = i2 + i3 + i4 + i5</code>. (If any arrow points inward, move that term to the left side.)` },
+    { prompt:`R1 = 10 kΩ and R6 = 10 kΩ are in series with a bank of four parallel 100 kΩ resistors (R2–R5). What is the total resistance?`,
+      opts:["50 Ω","45 kΩ","100 kΩ","75 kΩ"], correct:1,
+      exp:`Four 100 kΩ in parallel = <code>100 kΩ / 4 = 25 kΩ</code>. Total = <code>10 + 25 + 10 = 45 kΩ</code>.` },
+  ]
+},
+{
+  title:"Programming & Pseudocode Tracing",
+  items:[
+    { prompt:`What does this C program print?`,
+      code:`#include <stdio.h>
+int main(){
+  int i = 1;
+  while (i < 20){
+    if (i >= 21 || i < 19){
+      printf("Out of range");
+      break;
+    }
+    else if (i == 11)
+      printf("Mid range");
+    else
+      if (i == 21) printf("In range");
+      break;
+    i += 1;
+  }
+}`,
+      opts:["Out of range / Mid range / In range","Mid range","Out of range / Mid range","Out of range"], correct:3,
+      exp:`On the first pass <code>i = 1</code>. The test <code>(i>=21 || i<19)</code> is true because <code>1 < 19</code>, so it prints <b>Out of range</b> and breaks immediately.` },
+    { prompt:`For <code>arr = [2, 3, 4, 5, 6]</code>, what is <code>calc(arr)</code>?`,
+      code:`function calc(arr)
+    sum = 0
+    for i = 0 to 4
+        if arr[i] % 2 == 0 then
+            sum = sum + arr[i]
+            continue
+        end if
+        sum = sum + 1
+    end for
+    return sum
+end function`,
+      opts:["13","12","15","14"], correct:3,
+      exp:`Even elements add themselves; odd elements add 1: <code>2 + 1 + 4 + 1 + 6 = 14</code>.` },
+    { prompt:`What does this print?`,
+      code:`def calc(a, b):
+    sum = 0
+    for i in range(5, 10):
+        if i % 4 == 0 or i % 3 == 0:
+            sum += a
+        else:
+            sum += b
+    return sum
+print("Val:", calc(5, 7))`,
+      opts:["Val: 32","Val: 34","Val: 29","Val: 27"], correct:2,
+      exp:`i=5→+7, 6→+5, 7→+7, 8→+5, 9→+5. Total = <code>7+5+7+5+5 = 29</code>.` },
+    { prompt:`What is the final array and sum?`,
+      code:`arr = [1, 2, 3, 4, 5]
+sum_val = 0
+for i in range(len(arr)):
+    if i % 2 == 0:
+        arr[i] = arr[i] * 3
+    elif i % 3 == 0:
+        arr[i] = arr[i] + 5
+    else:
+        arr[i] = arr[i] * 2
+    sum_val += arr[i]`,
+      opts:["[3,4,8,8,15], Sum 38","[3,4,8,12,5], Sum 32","[3,4,8,10,15], Sum 40","[3,4,9,9,15], Sum 40"], correct:3,
+      exp:`i0:1×3=3, i1:2×2=4, i2:3×3=9, i3:4+5=9, i4:5×3=15 → <code>[3,4,9,9,15]</code>, sum <code>40</code>. (Index 2 is even, so ×3 = 9, not 8.)` },
+    { prompt:`What is the value of <code>count</code>?`,
+      code:`count = 0
+for i = 5 to 10
+    for j = 1 to 2
+        if (i + j) % 3 == 0
+            count = count + 1
+        end if
+    end for
+end for
+print count`,
+      opts:["4","3","5","2"], correct:0,
+      exp:`<code>(i+j)</code> is divisible by 3 at (5,1)=6, (7,2)=9, (8,1)=9, (10,2)=12 → <code>count = 4</code> (ranges inclusive).` },
+    { prompt:`What does this print?`,
+      code:`function calc(a, b)
+    sum = 0
+    for i = 1 to 10
+        if i % 3 == 0
+            sum = sum + a
+        else if i % 2 == 0
+            sum = sum + b
+        else
+            sum = sum + 1
+        if sum > 10:
+            break
+    return sum
+print "Val:", calc(4, 3)`,
+      opts:["7","5","11","6"], correct:2,
+      exp:`i1→+1 (1), i2→+3 (4), i3→+4 (8), i4→+3 (11). Now <code>11 > 10</code> triggers break → result <code>11</code>.` },
+    { prompt:`What is <code>x</code>?`,
+      code:`x = 0
+for i in range(1, 5):
+    if i % 2 == 0:
+        x += i
+    else:
+        x -= i
+print(x)`,
+      opts:["0","4","6","2"], correct:3,
+      exp:`<code>−1 + 2 − 3 + 4 = 2</code>.` },
+    { prompt:`A flowchart sets <code>num = 4, val = 0</code>, checks <code>num&lt;5</code> (yes → i=0), then loops <code>while i&lt;num</code>: if <code>num%2==0</code> it breaks and prints <code>val</code>. What prints?`,
+      opts:["Value: 1","Value: 0","None of the above","Value: 5"], correct:1,
+      exp:`<code>num = 4</code> is even, so the first loop pass breaks before <code>val</code> ever changes → prints <b>Value: 0</b>.` },
+    { prompt:`What is the final array and sum?`,
+      code:`arr = [1, 2, 3, 4]
+sum_val = 0
+for i = 0 to len(arr)-1:
+    if i % 2 == 0:
+        arr[i] = arr[i] * 2
+    else:
+        arr[i] = arr[i] + 2
+    sum_val = sum_val + arr[i]
+print "Modified array:", arr
+print "Sum:", sum_val`,
+      opts:["[2,3,6,7], Sum 18","[2,4,6,6], Sum 18","[2,4,6,8], Sum 20","[2,3,6,6], Sum 17"], correct:1,
+      exp:`i0:1×2=2, i1:2+2=4, i2:3×2=6, i3:4+2=6 → <code>[2,4,6,6]</code>, sum <code>18</code>.` },
+    { prompt:`What is the value of <code>val</code>?`,
+      code:`num1 = 3
+num2 = 2
+val = 0
+for i = 0 to num1-1:
+    for j = 0 to num2-1:
+        val = val + 1
+    end for
+    if i == 1:
+        val = val + 1
+    end if
+end for
+print "Value:", val`,
+      opts:["9","7","6","8"], correct:1,
+      exp:`Inner loop adds 2 per outer pass → 6 total; the <code>i==1</code> pass adds 1 more → <code>7</code>.` },
+  ]
+},
+{
+  title:"Verilog & HDL Design",
+  items:[
+    { prompt:`Which circuit does this module implement?`,
+      code:`module dut(
+    input  wire a, b, c, d,
+    input  wire [1:0] slt,
+    output wire out
+);
+assign out = slt[1] ? (slt[0] ? d : c)
+                    : (slt[0] ? b : a);
+endmodule`,
+      opts:["Full Adder","Decoder","Multiplexer","Encoder"], correct:2,
+      exp:`The nested ternary picks one of four inputs (a, b, c, d) using the 2-bit select <code>slt</code> — a 4:1 <b>multiplexer</b>.` },
+    { prompt:`What kind of reset is implemented here?`,
+      code:`module dff(
+    input  wire clk,
+    input  wire reset,   // active-low
+    input  wire d,
+    output reg  q
+);
+always @(posedge clk or negedge reset) begin
+    if (~reset)
+        q <= 1'b0;
+    else
+        q <= d;
+end
+endmodule`,
+      opts:["Asynchronous Reset","Both of them","Synchronous Reset","None of the above"], correct:0,
+      exp:`<code>reset</code> appears in the sensitivity list (<code>negedge reset</code>), so <code>q</code> clears the instant reset asserts, independent of the clock — an <b>asynchronous reset</b>.` },
+    { prompt:`After time 10, what does <code>$display</code> print?`,
+      code:`reg [7:0] a, b, c;
+initial begin
+    a = 10; b = 20; c = 30;
+end
+initial begin
+    a <= b;
+    c <= a;
+    b <= c;
+    #10 $display("%0d, %0d, %0d", a, b, c);
+end`,
+      opts:["None of the above","10, 20, 30","20, 20, 20","20, 30, 10"], correct:3,
+      exp:`Non-blocking (<code>&lt;=</code>) assignments sample all right-hand sides first (a=10, b=20, c=30), then update together: <code>a←20, c←10, b←30</code> → prints <b>20, 30, 10</b>.` },
+    { prompt:`Which gate does this implement?`,
+      code:`module gate (
+    input  a, b,
+    output wire x
+);
+assign x = ~(~( a & b ));
+endmodule`,
+      opts:["AND","NAND","XNOR","XOR"], correct:0,
+      exp:`Double inversion cancels: <code>x = ~(~(a & b)) = a & b</code> — a plain <b>AND</b> gate.` },
+  ]
+},
+];
+
+const root = document.getElementById('root');
+let qn = 0;
+DATA.forEach(sec => {
+  const h = document.createElement('h2');
+  h.textContent = sec.title;
+  root.appendChild(h);
+  sec.items.forEach(item => {
+    qn++;
+    const q = document.createElement('div');
+    q.className = 'q';
+
+    const p = document.createElement('p');
+    p.className = 'q-prompt';
+    p.innerHTML = '<span class="q-num">' + qn + '.</span> ' + item.prompt;
+    q.appendChild(p);
+
+    if (item.figure) {
+      const fig = document.createElement('div');
+      fig.innerHTML = item.figure;
+      q.appendChild(fig);
+    }
+    if (item.code) {
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      code.textContent = item.code;
+      pre.appendChild(code);
+      q.appendChild(pre);
+    }
+
+    const ol = document.createElement('ol');
+    ol.className = 'opts';
+    ol.type = 'A';
+    item.opts.forEach(o => {
+      const li = document.createElement('li');
+      li.textContent = o;
+      ol.appendChild(li);
+    });
+    q.appendChild(ol);
+
+    const btn = document.createElement('button');
+    btn.className = 'toggle';
+    btn.textContent = 'Show answer';
+    const ans = document.createElement('div');
+    ans.className = 'ans';
+    const letter = String.fromCharCode(65 + item.correct);
+    const correctLine = document.createElement('div');
+    correctLine.className = 'correct';
+    correctLine.textContent = 'Answer: ' + letter + '. ' + item.opts[item.correct];
+    const expLine = document.createElement('div');
+    expLine.className = 'exp';
+    expLine.innerHTML = item.exp;
+    ans.appendChild(correctLine);
+    ans.appendChild(expLine);
+    btn.addEventListener('click', () => {
+      const on = ans.classList.toggle('show');
+      btn.textContent = on ? 'Hide answer' : 'Show answer';
+    });
+    q.appendChild(btn);
+    q.appendChild(ans);
+    root.appendChild(q);
+  });
+});
+
+let allShown = false;
+document.getElementById('toggleAll').addEventListener('click', () => {
+  allShown = !allShown;
+  document.querySelectorAll('.ans').forEach(a => a.classList.toggle('show', allShown));
+  document.querySelectorAll('.toggle').forEach(b => b.textContent = allShown ? 'Hide answer' : 'Show answer');
+  document.getElementById('toggleAll').textContent = allShown ? 'Hide all answers' : 'Reveal all answers';
+});
+</script>
+</body>
+</html>
