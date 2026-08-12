@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Getting to Know CODESYS — Kranti Canada</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="deck-stage.js"></script>
+
+<script type="application/json" id="speaker-notes">
+[
+  "Welcome. This deck is a primer on CODESYS — the dominant software platform for industrial automation. We'll go from zero to informed in about 15 minutes.",
+  "Think of CODESYS as the VS Code of industrial controllers — a universal IDE that programs the brains of factory machines, regardless of who made the hardware.",
+  "Before CODESYS, every PLC vendor had its own proprietary IDE. Engineers had to retrain and rewrite code every time they switched hardware. CODESYS broke that lock.",
+  "CODESYS GmbH is a German software company founded in 1994. The North American division — CODESYS Corporation — covers Canada, USA, and Mexico, and is our primary point of contact.",
+  "IEC 61131-3 is to industrial controllers what POSIX is to operating systems — a universal standard. CODESYS is the most widely adopted implementation of it in the world.",
+  "ST — Structured Text — is where our developers would feel at home. It's essentially a high-level procedural language, similar to Pascal or modern C. The rest of the languages serve specific use cases on the factory floor.",
+  "Three products, one platform: the IDE for writing code, the runtime for executing it on hardware, and a cloud server for managing fleets of devices. This is their full stack.",
+  "CODESYS is not just a legacy PLC tool — it supports OOP, version control integration, and CI/CD-capable workflows. It's a modern engineering environment that happens to target industrial hardware.",
+  "The Automation Server is their Industry 4.0 story. Native MQTT and OPC UA support means you can connect a controller directly to AWS or Azure without a middleware layer.",
+  "1 million deployed machines globally. This is not niche software — it's infrastructure-level technology running in packaging lines, cranes, ships, and building systems worldwide.",
+  "CODESYS sits beneath many branded products you might recognize. When Schneider sells EcoStruxure Machine Expert, they're shipping CODESYS under the hood. 400+ OEMs do the same.",
+  "The direction is clear: virtualization plus web-based tooling means industrial automation is converging with mainstream software practices. CODESYS go! is their bridge to the IT world.",
+  "Analogy for the room: CODESYS is to industrial controllers what Android was to smartphones — one platform, many device makers, hardware abstracted away from the software.",
+  "This slide is intentionally left as a working placeholder. Before presenting externally, we should fill in our specific integration points, IIoT roadmap touchpoints, and partnership goals.",
+  "Five things to remember. If you remember nothing else: hardware-independent IDE plus runtime, built on a global standard, used in over a million machines, and moving fast toward cloud and web.",
+  "All of these resources are free to access. The CODESYS Development System download is a full-featured IDE with no license fee — a great way to get hands-on quickly."
+]
+</script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --navy:   #0b1929;
+    --blue:   #1255a0;
+    --blue2:  #1a6fc4;
+    --slate:  #1e3a5f;
+    --accent: #f97316;
+    --accent2:#fbbf24;
+    --white:  #f4f7fb;
+    --muted:  #8ca4c0;
+    --card:   rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.10);
+
+    /* TYPE SCALE */
+    --t-hero:    96px;
+    --t-title:   68px;
+    --t-sub:     44px;
+    --t-body:    34px;
+    --t-small:   28px;
+    --t-xs:      24px;
+
+    /* SPACING */
+    --px: 110px;
+    --pt: 96px;
+    --pb: 80px;
+    --gap: 32px;
+    --gap-sm: 20px;
+  }
+
+  body { font-family: 'Inter', sans-serif; background: #000; }
+
+  /* ── SHARED SLIDE BASE ─────────────────────────────────── */
+  section {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── SLIDE LABEL CHIP ──────────────────────────────────── */
+  .label-chip {
+    font-size: var(--t-xs);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+  }
+
+  /* ── SLIDE TITLES ──────────────────────────────────────── */
+  .slide-title {
+    font-size: var(--t-title);
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--white);
+    letter-spacing: -0.02em;
+  }
+
+  .slide-title .accent { color: var(--accent); }
+
+  .slide-subtitle {
+    font-size: var(--t-sub);
+    font-weight: 400;
+    color: var(--muted);
+    line-height: 1.3;
+    margin-top: 16px;
+  }
+
+  /* ── BODY TEXT ─────────────────────────────────────────── */
+  .body-text {
+    font-size: var(--t-body);
+    line-height: 1.55;
+    color: var(--white);
+    font-weight: 400;
+  }
+
+  .body-text strong { color: var(--accent); font-weight: 700; }
+
+  .small-text {
+    font-size: var(--t-small);
+    line-height: 1.5;
+    color: rgba(244,247,251,0.80);
+  }
+
+  /* ── ACCENT LINE ───────────────────────────────────────── */
+  .accent-rule {
+    width: 64px; height: 4px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin-bottom: 32px;
+  }
+
+  /* ── STRIPE PLACEHOLDER ────────────────────────────────── */
+  .img-placeholder {
+    background: repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 8px,
+      rgba(255,255,255,0.06) 8px,
+      rgba(255,255,255,0.06) 16px
+    );
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    text-align: center;
+    padding: 20px;
+  }
+
+  /* ── DIVIDER ───────────────────────────────────────────── */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: var(--gap) 0;
+  }
+
+  /* ── STAT TILE ─────────────────────────────────────────── */
+  .stat-tile {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .stat-tile .stat-value {
+    font-size: 52px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .stat-tile .stat-label {
+    font-size: var(--t-xs);
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .stat-tile .stat-sub {
+    font-size: var(--t-small);
+    color: var(--white);
+    margin-top: 4px;
+  }
+
+  /* ── CARD ──────────────────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+  }
+  .card-title {
+    font-size: var(--t-small);
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+  }
+  .card-body {
+    font-size: var(--t-xs);
+    line-height: 1.5;
+    color: rgba(244,247,251,0.80);
+  }
+
+  /* ── BULLET LIST ───────────────────────────────────────── */
+  .bullet-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .bullet-list li {
+    font-size: var(--t-body);
+    line-height: 1.45;
+    padding-left: 32px;
+    position: relative;
+    color: var(--white);
+  }
+  .bullet-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 10px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .bullet-list li strong { color: var(--accent); font-weight: 700; }
+  .bullet-list.small li { font-size: var(--t-small); gap: 16px; }
+
+  /* ── NUMBERED LIST ─────────────────────────────────────── */
+  .numbered-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .numbered-list li {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    font-size: var(--t-body);
+    line-height: 1.45;
+  }
+  .numbered-list .num {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    min-width: 56px;
+    letter-spacing: -0.03em;
+  }
+  .numbered-list strong { color: var(--accent); font-weight: 700; }
+
+  /* ── SECTION HEADER SLIDES ─────────────────────────────── */
+  .section-header {
+    background: var(--blue);
+  }
+  .section-header .slide-title { color: #fff; }
+
+  /* ── HORIZONTAL RULE ───────────────────────────────────── */
+  hr { border: none; border-top: 1px solid var(--border); margin: var(--gap) 0; }
+
+  /* ── TWEAKS PANEL ──────────────────────────────────────── */
+  #tweaks-panel {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    right: 28px;
+    z-index: 99999;
+    background: #111c2d;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 20px 24px;
+    width: 280px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    font-family: 'Inter', sans-serif;
+    color: #f4f7fb;
+  }
+  #tweaks-panel.open { display: block; }
+  #tweaks-panel h4 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+  .tweak-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .tweak-row label { font-size: 12px; color: rgba(244,247,251,0.6); font-weight: 500; }
+  .tweak-row input[type=range] { width: 100%; accent-color: var(--accent); }
+  .tweak-row select { width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; padding: 6px 8px; font-size: 13px; }
+  .tweak-swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tweak-swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color .15s; }
+  .tweak-swatch.active { border-color: #fff; background: rgb(211, 44, 50); }
+</style>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 1 — TITLE
+══════════════════════════════════════════════ -->
+<section data-label="Title" style="
+  background: linear-gradient(135deg, #071424 0%, #0b2040 50%, #0f2a52 100%);
+  justify-content: flex-end;
+  padding: 0;
+  overflow: hidden;
+">
+  <!-- BG grid lines -->
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:80px 80px;"></div>
+  <!-- BG glow -->
+  <div style="position:absolute;top:-200px;right:-200px;width:900px;height:900px;background:radial-gradient(circle,rgba(18,85,160,0.35) 0%,transparent 70%);pointer-events:none;"></div>
+  <!-- Orange accent glow bottom left -->
+  <div style="position:absolute;bottom:-100px;left:100px;width:500px;height:500px;background:radial-gradient(circle,rgba(249,115,22,0.12) 0%,transparent 70%);pointer-events:none;"></div>
+
+  <!-- Left content -->
+  <div style="position:absolute;left:var(--px);top:50%;transform:translateY(-50%);max-width:920px;">
+    <!-- Logo lockup -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:48px;">
+      <div style="width:6px;height:56px;background:var(--accent);border-radius:3px;"></div>
+      <div>
+        <div style="font-size:var(--t-xs);font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);">Kranti Canada Associates Ltd.</div>
+        <div style="font-size:var(--t-xs);font-weight:500;color:rgba(140,164,192,0.6);letter-spacing:0.05em;">IoT Research &amp; Industrial Automation</div>
+      </div>
+    </div>
+
+    <div style="font-size:var(--t-xs);font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:24px;">Technology Primer</div>
+
+    <h1 style="font-size:96px;font-weight:900;line-height:1.05;letter-spacing:-0.03em;color:#fff;margin-bottom:40px;">
+      Getting to<br/>Know <span style="color:var(--accent);">CODESYS</span>
+    </h1>
+
+    <p style="font-size:var(--t-sub);font-weight:300;color:var(--muted);line-height:1.35;max-width:680px;">
+      A quick primer on the industrial automation software platform — built for engineering leadership.
+    </p>
+
+    <div style="margin-top:60px;display:flex;gap:40px;align-items:center;">
+      <div style="font-size:var(--t-small);color:rgba(140,164,192,0.7);">April 2026</div>
+      <div style="width:1px;height:20px;background:var(--border);"></div>
+      <div style="font-size:var(--t-small);color:rgba(140,164,192,0.7);">Kranti Canada Associates Ltd.</div>
+    </div>
+  </div>
+
+  <!-- Right abstract diagram -->
+  <div style="position:absolute;right:0;top:50%;transform:translateY(-50%);width:680px;height:680px;opacity:0.18;">
+    <svg viewBox="0 0 680 680" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+      <circle cx="340" cy="340" r="300" stroke="#1a6fc4" stroke-width="1.5"/>
+      <circle cx="340" cy="340" r="220" stroke="#1a6fc4" stroke-width="1"/>
+      <circle cx="340" cy="340" r="140" stroke="#f97316" stroke-width="1.5"/>
+      <circle cx="340" cy="340" r="60" fill="#f97316" opacity="0.6"/>
+      <line x1="40" y1="340" x2="640" y2="340" stroke="#1a6fc4" stroke-width="0.8"/>
+      <line x1="340" y1="40" x2="340" y2="640" stroke="#1a6fc4" stroke-width="0.8"/>
+    </svg>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 2 — WHAT IS CODESYS
+══════════════════════════════════════════════ -->
+<section data-label="What Is CODESYS" style="padding: var(--pt) var(--px) var(--pb);">
+  <div class="label-chip">The Elevator Pitch</div>
+  <h2 class="slide-title">What is <span class="accent">CODESYS?</span></h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:56px;flex:1;">
+    <!-- Left: 3 bullet points -->
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:40px;">
+      <div style="display:flex;gap:24px;align-items:flex-start;">
+        <div style="min-width:48px;height:48px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;margin-top:4px;">1</div>
+        <p class="body-text">A software platform for <strong>industrial automation</strong> — programs the "brains" of machines (PLCs, industrial controllers).</p>
+      </div>
+      <div style="display:flex;gap:24px;align-items:flex-start;">
+        <div style="min-width:48px;height:48px;background:var(--blue2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;margin-top:4px;">2</div>
+        <p class="body-text"><strong>Hardware-independent:</strong> one tool programs controllers from hundreds of different manufacturers.</p>
+      </div>
+      <div style="display:flex;gap:24px;align-items:flex-start;">
+        <div style="min-width:48px;height:48px;background:var(--slate);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;margin-top:4px;">3</div>
+        <p class="body-text">Built around the global <strong>IEC 61131-3</strong> programming standard.</p>
+      </div>
+    </div>
+
+    <!-- Right: flow diagram -->
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:0;align-items:center;">
+      <!-- Flow diagram -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0;width:100%;">
+        <div style="background:rgba(18,85,160,0.25);border:1.5px solid var(--blue2);border-radius:12px;padding:24px 40px;text-align:center;width:340px;">
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);">Engineer + Laptop</div>
+          <div style="font-size:var(--t-xs);color:var(--muted);margin-top:4px;">Writes control logic</div>
+        </div>
+        <div style="width:2px;height:40px;background:var(--accent);"></div>
+        <div style="background:var(--accent);border-radius:12px;padding:24px 40px;text-align:center;width:380px;">
+          <div style="font-size:var(--t-small);font-weight:800;color:#fff;">CODESYS IDE</div>
+          <div style="font-size:var(--t-xs);color:rgba(255,255,255,0.75);margin-top:4px;">Universal development environment</div>
+        </div>
+        <div style="width:2px;height:40px;background:var(--accent);"></div>
+        <div style="display:flex;gap:16px;">
+          <div style="background:rgba(30,58,95,0.8);border:1.5px solid var(--border);border-radius:10px;padding:20px 24px;text-align:center;width:170px;">
+            <div style="font-size:var(--t-xs);font-weight:700;color:var(--white);">PLC A</div>
+            <div style="font-size:24px;color:var(--muted);">Siemens</div>
+          </div>
+          <div style="background:rgba(30,58,95,0.8);border:1.5px solid var(--border);border-radius:10px;padding:20px 24px;text-align:center;width:170px;">
+            <div style="font-size:var(--t-xs);font-weight:700;color:var(--white);">PLC B</div>
+            <div style="font-size:24px;color:var(--muted);">Beckhoff</div>
+          </div>
+          <div style="background:rgba(30,58,95,0.8);border:1.5px solid var(--border);border-radius:10px;padding:20px 24px;text-align:center;width:170px;">
+            <div style="font-size:var(--t-xs);font-weight:700;color:var(--white);">PLC C</div>
+            <div style="font-size:24px;color:var(--muted);">WAGO</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 3 — WHY IT EXISTS
+══════════════════════════════════════════════ -->
+<section data-label="Why It Exists" style="padding: var(--pt) var(--px) var(--pb); background:linear-gradient(160deg,#0b1929 60%,#0f2240 100%);">
+  <div class="label-chip">The Problem It Solves</div>
+  <h2 class="slide-title">Why It Exists</h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:56px;flex:1;align-items:start;">
+    <!-- BEFORE -->
+    <div>
+      <div style="font-size:var(--t-small);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#e84040;margin-bottom:24px;">Before CODESYS</div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="background:rgba(232,64,64,0.08);border:1px solid rgba(232,64,64,0.2);border-radius:10px;padding:24px 28px;">
+          <div style="font-size:var(--t-small);font-weight:700;color:#ef8080;margin-bottom:8px;">Siemens TIA Portal</div>
+          <div style="font-size:var(--t-xs);color:var(--muted);">Only for Siemens hardware</div>
+        </div>
+        <div style="background:rgba(232,64,64,0.08);border:1px solid rgba(232,64,64,0.2);border-radius:10px;padding:24px 28px;">
+          <div style="font-size:var(--t-small);font-weight:700;color:#ef8080;margin-bottom:8px;">Rockwell Studio 5000</div>
+          <div style="font-size:var(--t-xs);color:var(--muted);">Only for Rockwell/Allen-Bradley</div>
+        </div>
+        <div style="background:rgba(232,64,64,0.08);border:1px solid rgba(232,64,64,0.2);border-radius:10px;padding:24px 28px;">
+          <div style="font-size:var(--t-small);font-weight:700;color:#ef8080;margin-bottom:8px;">Schneider Unity Pro</div>
+          <div style="font-size:var(--t-xs);color:var(--muted);">Only for Schneider hardware</div>
+        </div>
+        <div style="margin-top:8px;font-size:var(--t-small);color:#ef8080;font-weight:500;">→ Vendor lock-in · Retraining costs · Code can't move</div>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div>
+      <div style="font-size:var(--t-small);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:24px;">With CODESYS</div>
+      <div style="background:rgba(249,115,22,0.10);border:2px solid rgba(249,115,22,0.35);border-radius:12px;padding:36px 32px;margin-bottom:24px;">
+        <div style="font-size:var(--t-body);font-weight:800;color:var(--accent);margin-bottom:12px;">One IDE</div>
+        <div style="font-size:var(--t-small);color:var(--white);">Standards-based, hardware-independent development environment</div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="background:rgba(18,85,160,0.25);border:1px solid var(--blue2);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--white);">400+ Vendors</div>
+        <div style="background:rgba(18,85,160,0.25);border:1px solid var(--blue2);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--white);">Portable Code</div>
+        <div style="background:rgba(18,85,160,0.25);border:1px solid var(--blue2);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--white);">No Retraining</div>
+        <div style="background:rgba(18,85,160,0.25);border:1px solid var(--blue2);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--white);">IEC Standard</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 4 — THE COMPANY
+══════════════════════════════════════════════ -->
+<section data-label="The Company" style="padding: var(--pt) var(--px) var(--pb);">
+  <div class="label-chip">Company at a Glance</div>
+  <h2 class="slide-title">The Company Behind It</h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-top:52px;">
+    <div class="stat-tile">
+      <div class="stat-label">Founded</div>
+      <div class="stat-value">1994</div>
+      <div class="stat-sub">as 3S-Smart Software Solutions, Kempten, Germany</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">Global Machines</div>
+      <div class="stat-value">1M+</div>
+      <div class="stat-sub">deployed systems worldwide running CODESYS</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">Registered Users</div>
+      <div class="stat-value">300K+</div>
+      <div class="stat-sub">in the CODESYS Store globally</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:24px;margin-top:24px;">
+    <div class="stat-tile" style="padding:24px 20px;">
+      <div class="stat-label">Employees</div>
+      <div style="font-size:44px;font-weight:800;color:var(--accent);line-height:1;">250+</div>
+      <div class="stat-sub">headquarters in Kempten, DE</div>
+    </div>
+    <div class="stat-tile" style="padding:24px 20px;">
+      <div class="stat-label">North America HQ</div>
+      <div style="font-size:32px;font-weight:800;color:var(--accent2);line-height:1.2;">Boston, USA</div>
+      <div class="stat-sub">CODESYS Corporation — CA, US, MX</div>
+    </div>
+    <div class="stat-tile" style="padding:24px 20px;">
+      <div class="stat-label">Other Offices</div>
+      <div style="font-size:28px;font-weight:700;color:var(--white);line-height:1.4;">Beijing · Milan</div>
+      <div class="stat-sub">regional support &amp; sales</div>
+    </div>
+    <div class="stat-tile" style="padding:24px 20px;">
+      <div class="stat-label">Quality</div>
+      <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1.2;">ISO 9001</div>
+      <div class="stat-sub">certified since 2005 (2015 edition)</div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);border-radius:10px;padding:20px 28px;">
+    <p style="font-size:var(--t-small);color:var(--muted);">Our point of contact → <strong style="color:var(--accent);">CODESYS Corporation</strong> — the North American division covering Canada, USA &amp; Mexico (sales, support, training).</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 5 — IEC 61131-3
+══════════════════════════════════════════════ -->
+<section data-label="IEC 61131-3" style="
+  background: linear-gradient(135deg, #0b1929 0%, #0c2040 100%);
+  padding: var(--pt) var(--px) var(--pb);
+">
+  <div class="label-chip">The Standard</div>
+  <h2 class="slide-title">Built on <span class="accent">IEC 61131-3</span></h2>
+
+  <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:80px;margin-top:52px;align-items:center;">
+    <div style="display:flex;flex-direction:column;gap:36px;">
+      <div style="display:flex;gap:24px;align-items:flex-start;">
+        <div style="min-width:52px;height:52px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:var(--accent);border:2px solid var(--blue2);">§</div>
+        <div>
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);margin-bottom:8px;">The international standard</div>
+          <div class="small-text">IEC 61131-3 (since 1993) defines a common set of programming languages and structures so control software is portable across any vendor's hardware.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:24px;align-items:flex-start;">
+        <div style="min-width:52px;height:52px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:var(--accent);border:2px solid var(--blue2);">⇄</div>
+        <div>
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);margin-bottom:8px;">Portability by design</div>
+          <div class="small-text">Code written to the standard can be moved between compliant controllers without rewriting — vendor-neutral, future-proof.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:24px;align-items:flex-start;">
+        <div style="min-width:52px;height:52px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;">★</div>
+        <div>
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--accent);margin-bottom:8px;">CODESYS = market leader</div>
+          <div class="small-text">The most widely adopted vendor-independent implementation of IEC 61131-3 in the world.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seal badge -->
+    <div style="display:flex;align-items:center;justify-content:center;">
+      <div style="position:relative;width:320px;height:320px;">
+        <!-- Outer ring -->
+        <svg viewBox="0 0 320 320" style="position:absolute;inset:0;width:100%;height:100%;">
+          <circle cx="160" cy="160" r="150" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="12 6"/>
+          <circle cx="160" cy="160" r="126" fill="rgba(18,85,160,0.2)" stroke="var(--blue2)" stroke-width="1.5"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;">
+          <div style="font-size:var(--t-xs);font-weight:700;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;">IEC Standard</div>
+          <div style="font-size:56px;font-weight:900;color:var(--accent);line-height:1;letter-spacing:-0.02em;">61131-3</div>
+          <div style="font-size:var(--t-xs);font-weight:600;color:var(--white);">COMPLIANT</div>
+          <div style="width:40px;height:2px;background:var(--accent);border-radius:1px;margin:4px 0;"></div>
+          <div style="font-size:24px;color:var(--muted);">5 Programming Languages</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 6 — FIVE LANGUAGES
+══════════════════════════════════════════════ -->
+<section data-label="Five Languages" style="padding: var(--pt) var(--px) var(--pb);">
+  <div class="label-chip">Programming Languages</div>
+  <h2 class="slide-title">One IDE, <span class="accent">Five Languages</span></h2>
+
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:20px;margin-top:48px;flex:1;">
+
+    <div style="background:rgba(249,115,22,0.10);border:2px solid rgba(249,115,22,0.4);border-radius:14px;padding:32px 24px;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:40px;font-weight:900;color:var(--accent);letter-spacing:-0.02em;">LD</div>
+      <div style="font-size:var(--t-small);font-weight:700;color:var(--white);">Ladder Diagram</div>
+      <div style="flex:1;"></div>
+      <div style="font-size:24px;color:var(--muted);line-height:1.5;">Looks like electrical relay schematics. Most common on factory floors.</div>
+      <div style="font-size:24px;font-weight:600;color:var(--accent);padding:8px 12px;background:rgba(249,115,22,0.12);border-radius:6px;">Most common</div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:32px 24px;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:40px;font-weight:900;color:var(--blue2);letter-spacing:-0.02em;">FBD</div>
+      <div style="font-size:var(--t-small);font-weight:700;color:var(--white);">Function Block Diagram</div>
+      <div style="flex:1;"></div>
+      <div style="font-size:24px;color:var(--muted);line-height:1.5;">Drag-and-connect blocks. Great for signal flow and process logic.</div>
+    </div>
+
+    <div style="background:rgba(26,111,196,0.15);border:2px solid rgba(26,111,196,0.4);border-radius:14px;padding:32px 24px;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:40px;font-weight:900;color:#60a5fa;letter-spacing:-0.02em;">ST</div>
+      <div style="font-size:var(--t-small);font-weight:700;color:var(--white);">Structured Text</div>
+      <div style="flex:1;"></div>
+      <div style="font-size:24px;color:var(--muted);line-height:1.5;">Text-based, similar to Pascal/C. High-level procedural language.</div>
+      <div style="font-size:24px;font-weight:600;color:#60a5fa;padding:8px 12px;background:rgba(96,165,250,0.10);border-radius:6px;">Our devs' home turf</div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:32px 24px;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:40px;font-weight:900;color:var(--muted);letter-spacing:-0.02em;">SFC</div>
+      <div style="font-size:var(--t-small);font-weight:700;color:var(--white);">Sequential Function Chart</div>
+      <div style="flex:1;"></div>
+      <div style="font-size:24px;color:var(--muted);line-height:1.5;">Step-by-step process logic. Visual state machine for sequential operations.</div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:32px 24px;display:flex;flex-direction:column;gap:16px;opacity:0.65;">
+      <div style="font-size:40px;font-weight:900;color:var(--muted);letter-spacing:-0.02em;">IL</div>
+      <div style="font-size:var(--t-small);font-weight:700;color:var(--white);">Instruction List</div>
+      <div style="flex:1;"></div>
+      <div style="font-size:24px;color:var(--muted);line-height:1.5;">Assembler-like low-level language. Deprecated by PLCopen — optional use only.</div>
+      <div style="font-size:24px;font-weight:600;color:var(--muted);padding:8px 12px;background:rgba(140,164,192,0.08);border-radius:6px;">Deprecated</div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 7 — THREE PRODUCTS
+══════════════════════════════════════════════ -->
+<section data-label="Three Products" style="
+  background: linear-gradient(160deg, #07141f 0%, #0d1e34 100%);
+  padding: var(--pt) var(--px) var(--pb);
+">
+  <div class="label-chip">Platform Overview</div>
+  <h2 class="slide-title">Three <span class="accent">Core Products</span></h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;margin-top:56px;flex:1;align-items:stretch;">
+
+    <!-- Product 1 -->
+    <div style="background:rgba(18,85,160,0.15);border:1.5px solid var(--blue2);border-radius:16px;padding:44px 36px;display:flex;flex-direction:column;gap:20px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:var(--blue2);"></div>
+      <div style="font-size:var(--t-xs);font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue2);">Product 01</div>
+      <div style="font-size:var(--t-body);font-weight:800;color:var(--white);line-height:1.2;">Development<br/>System</div>
+      <div style="font-size:var(--t-xs);font-weight:600;color:var(--accent);background:rgba(249,115,22,0.12);border-radius:6px;padding:8px 12px;align-self:flex-start;">Free — Full Version</div>
+      <div style="font-size:var(--t-small);color:rgba(244,247,251,0.75);line-height:1.5;flex:1;">The IDE engineers use on laptops to write, debug, and simulate control programs. Full-featured with no license cost.</div>
+      <div style="font-size:var(--t-xs);color:var(--blue2);font-weight:600;">Runs on: Windows PC / Laptop</div>
+    </div>
+
+    <!-- Product 2 -->
+    <div style="background:rgba(249,115,22,0.10);border:2px solid rgba(249,115,22,0.45);border-radius:16px;padding:44px 36px;display:flex;flex-direction:column;gap:20px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent);"></div>
+      <div style="font-size:var(--t-xs);font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);">Product 02</div>
+      <div style="font-size:var(--t-body);font-weight:800;color:var(--white);line-height:1.2;">CODESYS<br/>Control (Runtime)</div>
+      <div style="font-size:var(--t-xs);font-weight:600;color:var(--white);background:rgba(249,115,22,0.20);border-radius:6px;padding:8px 12px;align-self:flex-start;">The "SoftPLC"</div>
+      <div style="font-size:var(--t-small);color:rgba(244,247,251,0.75);line-height:1.5;flex:1;">The engine that actually runs the program on a device — real hardware or a virtualized PLC on standard IT hardware.</div>
+      <div style="font-size:var(--t-xs);color:var(--accent);font-weight:600;">Runs on: Controller Hardware / VM</div>
+    </div>
+
+    <!-- Product 3 -->
+    <div style="background:rgba(18,85,160,0.15);border:1.5px solid var(--blue2);border-radius:16px;padding:44px 36px;display:flex;flex-direction:column;gap:20px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:var(--blue2);"></div>
+      <div style="font-size:var(--t-xs);font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue2);">Product 03</div>
+      <div style="font-size:var(--t-body);font-weight:800;color:var(--white);line-height:1.2;">Automation<br/>Server</div>
+      <div style="font-size:var(--t-xs);font-weight:600;color:var(--accent2);background:rgba(251,191,36,0.10);border-radius:6px;padding:8px 12px;align-self:flex-start;">Industry 4.0 Play</div>
+      <div style="font-size:var(--t-small);color:rgba(244,247,251,0.75);line-height:1.5;flex:1;">Cloud platform for remotely managing, monitoring, and updating fleets of controllers. Remote deploy, debug, and record data.</div>
+      <div style="font-size:var(--t-xs);color:var(--blue2);font-weight:600;">Runs on: Cloud / Private Server</div>
+    </div>
+
+  </div>
+
+  <!-- Stack diagram label -->
+  <div style="display:flex;justify-content:center;gap:60px;margin-top:32px;align-items:center;">
+    <div style="font-size:24px;color:var(--muted);">&#8592; Engineer's Tool</div>
+    <div style="width:60px;height:1px;background:var(--border);"></div>
+    <div style="font-size:24px;color:var(--muted);">Device Engine &#8594;</div>
+    <div style="width:60px;height:1px;background:var(--border);"></div>
+    <div style="font-size:24px;color:var(--muted);">Cloud Layer &#8594;</div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 8 — DEVELOPER FEATURES
+══════════════════════════════════════════════ -->
+<section data-label="Developer Features" style="padding: var(--pt) var(--px) var(--pb);">
+  <div class="label-chip">Engineering Capabilities</div>
+  <h2 class="slide-title">Why Engineers <span class="accent">Like It</span></h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:48px;">
+
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div style="font-size:var(--t-small);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:12px;">Classic PLC Features</div>
+      <ul class="bullet-list" style="gap:14px;">
+        <li style="font-size:var(--t-small);">Ladder, FBD, SFC visual editors</li>
+        <li style="font-size:var(--t-small);">Integrated simulator — no hardware needed to test</li>
+        <li style="font-size:var(--t-small);"><strong>Online change</strong> — modify code while the machine runs</li>
+        <li style="font-size:var(--t-small);">Variable monitoring &amp; online debugging</li>
+        <li style="font-size:var(--t-small);">All major fieldbuses: EtherCAT, Profinet, Modbus, CAN</li>
+      </ul>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div style="font-size:var(--t-small);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);border-bottom:1px solid rgba(249,115,22,0.3);padding-bottom:12px;">Modern Software Engineering</div>
+      <ul class="bullet-list" style="gap:14px;">
+        <li style="font-size:var(--t-small);"><strong>OOP</strong> — inheritance, interfaces, libraries (like real software)</li>
+        <li style="font-size:var(--t-small);">Version control integration (Git compatible)</li>
+        <li style="font-size:var(--t-small);">Static code analysis &amp; CI/CD-capable workflows</li>
+        <li style="font-size:var(--t-small);">Integrated HMI visualization (web, native, mobile)</li>
+        <li style="font-size:var(--t-small);">Security: certificates, encryption, threat-modeling editor</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top:36px;background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:20px 28px;">
+    <p style="font-size:var(--t-small);color:var(--white);"><strong style="color:var(--muted);font-weight:500;">Key insight: </strong>CODESYS bridges the gap between traditional PLC programming and modern software engineering practices — making it accessible to both OT and IT teams.</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 9 — CLOUD / IIOT
+══════════════════════════════════════════════ -->
+<section data-label="Industry 4.0" style="
+  background: linear-gradient(160deg,#071424 0%,#091e38 60%,#0b2240 100%);
+  padding: var(--pt) var(--px) var(--pb);
+">
+  <div class="label-chip">Industry 4.0 &amp; IIoT</div>
+  <h2 class="slide-title">Cloud-Ready <span class="accent">Out of the Box</span></h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:52px;align-items:start;">
+    <div style="display:flex;flex-direction:column;gap:28px;">
+      <div style="display:flex;gap:20px;align-items:flex-start;">
+        <div style="background:rgba(249,115,22,0.15);border:1.5px solid rgba(249,115,22,0.4);border-radius:8px;padding:10px 8px;font-size:24px;font-weight:800;color:var(--accent);min-width:120px;text-align:center;white-space:nowrap;">MQTT</div>
+        <p class="small-text">Connect controllers directly to AWS IoT Core, Azure IoT Hub, or any MQTT broker — no gateway middleware required.</p>
+      </div>
+      <div style="display:flex;gap:20px;align-items:flex-start;">
+        <div style="background:rgba(26,111,196,0.15);border:1.5px solid rgba(26,111,196,0.4);border-radius:8px;padding:10px 8px;font-size:24px;font-weight:800;color:#60a5fa;min-width:120px;text-align:center;">OPC UA</div>
+        <p class="small-text">Industry-standard machine data exchange protocol. Provides structured, secure data access between controllers and cloud applications.</p>
+      </div>
+      <div style="display:flex;gap:20px;align-items:flex-start;">
+        <div style="background:rgba(26,111,196,0.15);border:1.5px solid rgba(26,111,196,0.4);border-radius:8px;padding:10px 8px;font-size:24px;font-weight:800;color:#60a5fa;min-width:120px;text-align:center;">HTTPS</div>
+        <p class="small-text">Secure REST APIs over HTTPS enable modern web and mobile dashboards to consume PLC data directly.</p>
+      </div>
+    </div>
+
+    <!-- Architecture stack -->
+    <div style="display:flex;flex-direction:column;gap:0;align-items:center;">
+      <div style="background:rgba(249,115,22,0.15);border:1.5px solid rgba(249,115,22,0.5);border-radius:10px;padding:18px 28px;width:100%;text-align:center;">
+        <div style="font-size:var(--t-small);font-weight:700;color:var(--accent);">Browser / Mobile Dashboard</div>
+        <div style="font-size:24px;color:var(--muted);margin-top:4px;">WebVisu · Automation Server UI</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;">
+        <div style="width:2px;height:12px;background:var(--blue2);"></div>
+        <div style="font-size:24px;color:var(--muted);">HTTPS</div>
+        <div style="width:2px;height:12px;background:var(--blue2);"></div>
+      </div>
+      <div style="background:rgba(18,85,160,0.25);border:1.5px solid var(--blue2);border-radius:10px;padding:18px 28px;width:100%;text-align:center;">
+        <div style="font-size:var(--t-small);font-weight:700;color:#60a5fa;">Cloud Layer</div>
+        <div style="font-size:24px;color:var(--muted);margin-top:4px;">CODESYS Automation Server · AWS · Azure</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;">
+        <div style="width:2px;height:12px;background:var(--blue2);"></div>
+        <div style="font-size:24px;color:var(--muted);">MQTT / OPC UA</div>
+        <div style="width:2px;height:12px;background:var(--blue2);"></div>
+      </div>
+      <div style="background:rgba(18,85,160,0.15);border:1px solid var(--border);border-radius:10px;padding:18px 28px;width:100%;text-align:center;">
+        <div style="font-size:var(--t-small);font-weight:700;color:var(--white);">Edge Gateways</div>
+        <div style="font-size:24px;color:var(--muted);margin-top:4px;">Protocol translation · Local processing</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;">
+        <div style="width:2px;height:12px;background:var(--blue2);"></div>
+        <div style="font-size:24px;color:var(--muted);">Fieldbus</div>
+        <div style="width:2px;height:12px;background:var(--blue2);"></div>
+      </div>
+      <div style="background:rgba(30,58,95,0.6);border:1px solid var(--border);border-radius:10px;padding:18px 28px;width:100%;text-align:center;">
+        <div style="font-size:var(--t-small);font-weight:700;color:var(--muted);">Field Devices / PLCs</div>
+        <div style="font-size:24px;color:rgba(140,164,192,0.6);margin-top:4px;">Running CODESYS Control Runtime</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 10 — INDUSTRIES
+══════════════════════════════════════════════ -->
+<section data-label="Industries" style="padding: var(--pt) var(--px) var(--pb);">
+  <div class="label-chip">Applications</div>
+  <h2 class="slide-title">Industries &amp; <span class="accent">Applications</span></h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:52px;align-items:start;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+      <div class="card" style="padding:24px;">
+        <div style="font-size:28px;margin-bottom:10px;color:var(--accent);">⚙</div>
+        <div class="card-title">Packaging Machines</div>
+        <div class="card-body">High-speed line control, conveyor logic, HMI</div>
+      </div>
+      <div class="card" style="padding:24px;">
+        <div style="font-size:28px;margin-bottom:10px;color:var(--accent);">🚜</div>
+        <div class="card-title">Mobile Machines</div>
+        <div class="card-body">Construction, agriculture, forestry equipment</div>
+      </div>
+      <div class="card" style="padding:24px;">
+        <div style="font-size:28px;margin-bottom:10px;color:var(--accent);">🏗</div>
+        <div class="card-title">Building Automation</div>
+        <div class="card-body">BACnet, KNX — HVAC, lighting, energy mgmt</div>
+      </div>
+      <div class="card" style="padding:24px;">
+        <div style="font-size:28px;margin-bottom:10px;color:var(--accent);">⚓</div>
+        <div class="card-title">Marine &amp; Shipping</div>
+        <div class="card-body">Vessel automation, crane &amp; winch control</div>
+      </div>
+      <div class="card" style="padding:24px;">
+        <div style="font-size:28px;margin-bottom:10px;color:var(--accent);">💧</div>
+        <div class="card-title">Process Automation</div>
+        <div class="card-body">Water treatment, chemical, oil &amp; gas</div>
+      </div>
+      <div class="card" style="padding:24px;">
+        <div style="font-size:28px;margin-bottom:10px;color:var(--accent);">🤖</div>
+        <div class="card-title">Robotics &amp; Motion</div>
+        <div class="card-body">Multi-axis motion, cobot integration</div>
+      </div>
+    </div>
+
+    <!-- Big number callout -->
+    <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:20px;padding-left:20px;border-left:3px solid rgba(249,115,22,0.3);">
+      <div style="font-size:120px;font-weight:900;color:var(--accent);line-height:1;letter-spacing:-0.04em;">1M+</div>
+      <div style="font-size:var(--t-sub);font-weight:700;color:var(--white);line-height:1.2;">deployed machines<br/>worldwide</div>
+      <div style="font-size:var(--t-small);color:var(--muted);line-height:1.5;">Running CODESYS Control Runtime across packaging lines, cranes, ships, buildings, and factory floors globally.</div>
+      <div style="margin-top:8px;font-size:var(--t-small);font-weight:700;color:var(--accent);">Relevant to Kranti Canada:</div>
+      <div style="font-size:var(--t-small);color:var(--white);">PLC controllers, cobots, and machine vision systems in our own research scope all sit within this ecosystem.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 11 — ECOSYSTEM
+══════════════════════════════════════════════ -->
+<section data-label="Ecosystem" style="
+  background: linear-gradient(160deg,#071424 0%,#0c1e36 100%);
+  padding: var(--pt) var(--px) var(--pb);
+">
+  <div class="label-chip">Market Position</div>
+  <h2 class="slide-title">An <span class="accent">Industry Standard</span></h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:52px;align-items:start;">
+    <div style="display:flex;flex-direction:column;gap:32px;">
+      <div>
+        <div style="font-size:80px;font-weight:900;color:var(--accent);line-height:1;letter-spacing:-0.03em;">400+</div>
+        <div style="font-size:var(--t-small);color:var(--white);margin-top:8px;">device manufacturers ship hardware with CODESYS support</div>
+      </div>
+      <ul class="bullet-list" style="gap:20px;">
+        <li style="font-size:var(--t-small);"><strong>Beckhoff, WAGO, Schneider, Festo</strong></li>
+        <li style="font-size:var(--t-small);"><strong>Advantech, ifm, Eaton</strong> and hundreds more</li>
+        <li style="font-size:var(--t-small);"><strong>Schneider EcoStruxure Machine Expert</strong> is CODESYS under the hood</li>
+      </ul>
+      <div style="background:rgba(249,115,22,0.09);border:1px solid rgba(249,115,22,0.25);border-radius:10px;padding:20px 24px;">
+        <div style="font-size:var(--t-small);font-weight:700;color:var(--accent);margin-bottom:8px;">Market position</div>
+        <div style="font-size:24px;color:var(--muted);line-height:1.5;">De-facto runtime for OEMs that don't want to build their own programming stack — saves an estimated 15 years of R&D.</div>
+      </div>
+    </div>
+
+    <!-- Logo wall placeholder -->
+    <div>
+      <div style="font-size:var(--t-xs);font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;">Selected OEM Partners (grayscale)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;justify-content:center;height:72px;">
+          <span style="font-size:24px;font-weight:700;color:rgba(255,255,255,0.45);">BECKHOFF</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;justify-content:center;height:72px;">
+          <span style="font-size:24px;font-weight:700;color:rgba(255,255,255,0.45);">WAGO</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;justify-content:center;height:72px;">
+          <span style="font-size:24px;font-weight:700;color:rgba(255,255,255,0.45);">SCHNEIDER</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;justify-content:center;height:72px;">
+          <span style="font-size:24px;font-weight:700;color:rgba(255,255,255,0.45);">FESTO</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;justify-content:center;height:72px;">
+          <span style="font-size:24px;font-weight:700;color:rgba(255,255,255,0.45);">EATON</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;justify-content:center;height:72px;">
+          <span style="font-size:24px;font-weight:700;color:rgba(255,255,255,0.45);">ifm</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;justify-content:center;height:72px;">
+          <span style="font-size:24px;font-weight:700;color:rgba(255,255,255,0.45);">ADVANTECH</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;justify-content:center;height:72px;">
+          <span style="font-size:24px;font-weight:700;color:rgba(255,255,255,0.45);">B&R</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;justify-content:center;height:72px;">
+          <span style="font-size:24px;font-weight:700;color:rgba(255,255,255,0.45);">+ 392 more</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 12 — RECENT INNOVATIONS
+══════════════════════════════════════════════ -->
+<section data-label="Recent Innovations" style="padding: var(--pt) var(--px) var(--pb);">
+  <div class="label-chip">2024 – 2026</div>
+  <h2 class="slide-title">Recent <span class="accent">Innovations</span></h2>
+
+  <!-- Timeline -->
+  <div style="margin-top:56px;position:relative;">
+    <!-- Horizontal line -->
+    <div style="position:absolute;top:28px;left:60px;right:60px;height:2px;background:linear-gradient(90deg,var(--blue2),var(--accent));"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:28px;position:relative;">
+
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:20px;padding-top:0;">
+        <div style="width:70px;height:70px;background:var(--slate);border:2px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:var(--muted);">2023</div>
+        <div style="font-size:var(--t-xs);font-weight:600;color:var(--muted);margin-top:4px;">Foundation</div>
+        <div style="font-size:24px;color:rgba(140,164,192,0.6);line-height:1.5;">Continued expansion of Automation Server and ecosystem partnerships.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:20px;padding-top:0;">
+        <div style="width:70px;height:70px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;">2024</div>
+        <div style="font-size:var(--t-xs);font-weight:700;color:var(--accent);margin-top:4px;">Safety Breakthrough</div>
+        <div style="background:rgba(249,115,22,0.10);border:1px solid rgba(249,115,22,0.3);border-radius:10px;padding:20px;">
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);margin-bottom:8px;">Virtual Safe Control SL</div>
+          <div style="font-size:24px;color:rgba(244,247,251,0.75);line-height:1.5;">Hardware-independent safety controller. TÜV Süd certified, IEC 61508. <span style="color:var(--accent);font-weight:600;">Product of the Year 2024.</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:20px;padding-top:0;">
+        <div style="width:70px;height:70px;background:var(--blue2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;">2025</div>
+        <div style="font-size:var(--t-xs);font-weight:700;color:#60a5fa;margin-top:4px;">Web-Based IDE</div>
+        <div style="background:rgba(26,111,196,0.15);border:1px solid rgba(26,111,196,0.4);border-radius:10px;padding:20px;">
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);margin-bottom:8px;">CODESYS go!</div>
+          <div style="font-size:24px;color:rgba(244,247,251,0.75);line-height:1.5;">Browser-based development environment. Bridges traditional OT and modern IT dev workflows.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:20px;padding-top:0;">
+        <div style="width:70px;height:70px;background:linear-gradient(135deg,var(--blue2),var(--accent));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;">2026</div>
+        <div style="font-size:var(--t-xs);font-weight:700;color:var(--accent2);margin-top:4px;">Virtualization</div>
+        <div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:10px;padding:20px;">
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);margin-bottom:8px;">Virtual Control SL</div>
+          <div style="font-size:24px;color:rgba(244,247,251,0.75);line-height:1.5;">Full PLC virtualization on standard IT hardware. Cheaper, scalable, cloud-deployable.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="margin-top:40px;background:rgba(18,85,160,0.15);border:1px solid var(--blue2);border-radius:10px;padding:20px 28px;">
+    <p style="font-size:var(--t-small);color:var(--white);"><strong style="color:#60a5fa;">Direction: </strong>Virtualization + web-based tooling = industrial automation converging with mainstream software practices. The OT/IT gap is closing.</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 13 — LANDSCAPE COMPARISON
+══════════════════════════════════════════════ -->
+<section data-label="Landscape" style="
+  background: linear-gradient(160deg,#07141f 0%,#0c1e36 100%);
+  padding: var(--pt) var(--px) var(--pb);
+">
+  <div class="label-chip">Market Context</div>
+  <h2 class="slide-title">CODESYS in the <span class="accent">PLC Landscape</span></h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:52px;align-items:start;">
+
+    <!-- Comparison table -->
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <!-- Header -->
+        <div style="background:rgba(232,64,64,0.12);border-bottom:1px solid var(--border);padding:18px 24px;">
+          <div style="font-size:var(--t-xs);font-weight:700;color:#ef8080;letter-spacing:0.08em;text-transform:uppercase;">Proprietary Stacks</div>
+        </div>
+        <div style="background:rgba(249,115,22,0.12);border-bottom:1px solid var(--border);border-left:1px solid var(--border);padding:18px 24px;">
+          <div style="font-size:var(--t-xs);font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;">CODESYS</div>
+        </div>
+        <!-- Rows -->
+        <div style="padding:18px 24px;border-bottom:1px solid var(--border);">
+          <div style="font-size:24px;color:var(--white);">Siemens TIA Portal</div>
+          <div style="font-size:24px;color:var(--muted);">Siemens hardware only</div>
+        </div>
+        <div style="padding:18px 24px;border-bottom:1px solid var(--border);border-left:1px solid var(--border);">
+          <div style="font-size:24px;color:var(--white);">Hardware-independent</div>
+          <div style="font-size:24px;color:var(--muted);">Programs any compatible device</div>
+        </div>
+        <div style="padding:18px 24px;border-bottom:1px solid var(--border);">
+          <div style="font-size:24px;color:var(--white);">Rockwell Studio 5000</div>
+          <div style="font-size:24px;color:var(--muted);">Allen-Bradley hardware only</div>
+        </div>
+        <div style="padding:18px 24px;border-bottom:1px solid var(--border);border-left:1px solid var(--border);">
+          <div style="font-size:24px;color:var(--white);">Open ecosystem</div>
+          <div style="font-size:24px;color:var(--muted);">400+ device manufacturers</div>
+        </div>
+        <div style="padding:18px 24px;border-bottom:1px solid var(--border);">
+          <div style="font-size:24px;color:var(--white);">B&R Automation Studio</div>
+          <div style="font-size:24px;color:var(--muted);">B&R hardware only</div>
+        </div>
+        <div style="padding:18px 24px;border-bottom:1px solid var(--border);border-left:1px solid var(--border);">
+          <div style="font-size:24px;color:var(--white);">IEC 61131-3 standard</div>
+          <div style="font-size:24px;color:var(--muted);">Portable, vendor-neutral code</div>
+        </div>
+        <div style="padding:18px 24px;">
+          <div style="font-size:24px;color:var(--white);">Vendor lock-in</div>
+          <div style="font-size:24px;color:var(--muted);">High switching costs</div>
+        </div>
+        <div style="padding:18px 24px;border-left:1px solid var(--border);">
+          <div style="font-size:24px;color:var(--white);">OEM-ready runtime</div>
+          <div style="font-size:24px;color:var(--muted);">Saves ~15 years of R&D</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analogy callout -->
+    <div style="display:flex;flex-direction:column;gap:28px;justify-content:center;padding-left:20px;">
+      <div style="border-left:4px solid var(--accent);padding-left:28px;">
+        <div style="font-size:var(--t-xs);font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">The Analogy</div>
+        <p style="font-size:var(--t-body);font-weight:600;color:var(--white);line-height:1.4;">CODESYS is to industrial controllers what <span style="color:var(--accent);">Android</span> was to smartphones.</p>
+      </div>
+      <p class="small-text">One platform. Many device makers. Hardware abstracted away from the software. A developer learns it once and can target hundreds of different products.</p>
+      <div style="background:rgba(249,115,22,0.09);border:1px solid rgba(249,115,22,0.25);border-radius:10px;padding:20px 24px;margin-top:8px;">
+        <div style="font-size:var(--t-small);font-weight:700;color:var(--accent);margin-bottom:8px;">Why OEMs choose CODESYS</div>
+        <div style="font-size:24px;color:var(--muted);line-height:1.5;">Building a proprietary PLC programming environment from scratch takes 10–15 years and enormous R&D budget. CODESYS is the off-the-shelf alternative.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 14 — RELEVANCE TO US
+══════════════════════════════════════════════ -->
+<section data-label="Relevance to Us" style="
+  background: linear-gradient(135deg,#071424 0%,#0d2040 60%,#0f2a52 100%);
+  padding: var(--pt) var(--px) var(--pb);
+">
+  <div style="display:flex;gap:20px;align-items:center;margin-bottom:24px;">
+    <div class="label-chip" style="margin-bottom:0;">Strategy</div>
+    <div style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.3);border-radius:6px;padding:6px 14px;font-size:24px;font-weight:600;color:var(--accent);"></div>
+  </div>
+  <h2 class="slide-title">Relevance to <span class="accent">Kranti Canada</span></h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:44px;">
+
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div style="background:rgba(18,85,160,0.15);border:1px solid var(--blue2);border-left:4px solid var(--blue2);border-radius:8px;padding:24px 24px 24px 20px;">
+        <div style="font-size:var(--t-small);font-weight:700;color:#60a5fa;margin-bottom:8px;">Integration Opportunities</div>
+        <div class="small-text">We work with PLCs, cobots, and machine vision — all sit in the CODESYS ecosystem. Our IoT data pipelines and dashboards can directly integrate via MQTT / OPC UA.</div>
+      </div>
+      <div style="background:rgba(18,85,160,0.15);border:1px solid var(--blue2);border-left:4px solid var(--blue2);border-radius:8px;padding:24px 24px 24px 20px;">
+        <div style="font-size:var(--t-small);font-weight:700;color:#60a5fa;margin-bottom:8px;">Talent &amp; Skills Alignment</div>
+        <div class="small-text">ST (Structured Text) is syntactically close to modern languages our dev team already knows. Lower barrier to contribute to PLC programming projects.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div style="background:rgba(249,115,22,0.09);border:1px solid rgba(249,115,22,0.25);border-left:4px solid var(--accent);border-radius:8px;padding:24px 24px 24px 20px;">
+        <div style="font-size:var(--t-small);font-weight:700;color:var(--accent);margin-bottom:8px;">Partnership / Ecosystem</div>
+        <div class="small-text">CODESYS Corporation (Boston) is the North American contact. Potential for reseller, solution partner, or co-development agreements for the Canadian market.</div>
+      </div>
+      <div style="background:rgba(249,115,22,0.09);border:1px solid rgba(249,115,22,0.25);border-left:4px solid var(--accent);border-radius:8px;padding:24px 24px 24px 20px;">
+        <div style="font-size:var(--t-small);font-weight:700;color:var(--accent);margin-bottom:8px;">Industry 4.0 / IIoT Roadmap</div>
+        <div class="small-text">CODESYS Automation Server + MQTT connects directly to cloud analytics. Fits our research agenda around smart manufacturing and connected industrial systems.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.15);border-radius:10px;padding:20px 28px;">
+    <div style="font-size:var(--t-small);color:rgba(140,164,192,0.7);font-style:italic;"></div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 15 — TAKEAWAYS
+══════════════════════════════════════════════ -->
+<section data-label="Key Takeaways" style="
+  background: linear-gradient(160deg, #0b1929 0%, #0f2040 100%);
+  padding: var(--pt) var(--px) var(--pb);
+">
+  <div class="label-chip">Summary</div>
+  <h2 class="slide-title">The One-Minute <span class="accent">Summary</span></h2>
+
+  <div style="margin-top:52px;display:flex;flex-direction:column;gap:28px;">
+
+    <div style="display:flex;gap:32px;align-items:center;padding:28px 36px;background:rgba(249,115,22,0.09);border:1px solid rgba(249,115,22,0.25);border-radius:12px;">
+      <div style="font-size:64px;font-weight:900;color:var(--accent);line-height:1;min-width:60px;">1</div>
+      <p style="font-size:var(--t-body);color:var(--white);line-height:1.4;"><strong style="color:var(--accent);">Hardware-independent IDE + Runtime</strong> for programming industrial controllers (PLCs) from any manufacturer.</p>
+    </div>
+
+    <div style="display:flex;gap:32px;align-items:center;padding:24px 36px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+      <div style="font-size:64px;font-weight:900;color:var(--muted);line-height:1;min-width:60px;">2</div>
+      <p style="font-size:var(--t-body);color:var(--white);line-height:1.4;">Built on the international <strong style="color:var(--accent);">IEC 61131-3 standard</strong> — code is portable and vendor-neutral.</p>
+    </div>
+
+    <div style="display:flex;gap:32px;align-items:center;padding:24px 36px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+      <div style="font-size:64px;font-weight:900;color:var(--muted);line-height:1;min-width:60px;">3</div>
+      <p style="font-size:var(--t-body);color:var(--white);line-height:1.4;"><strong style="color:var(--accent);">Three products:</strong> Development System (IDE) + Control (runtime) + Automation Server (cloud).</p>
+    </div>
+
+    <div style="display:flex;gap:32px;align-items:center;padding:24px 36px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+      <div style="font-size:64px;font-weight:900;color:var(--muted);line-height:1;min-width:60px;">4</div>
+      <p style="font-size:var(--t-body);color:var(--white);line-height:1.4;">Used by <strong style="color:var(--accent);">400+ device makers</strong> in <strong style="color:var(--accent);">1M+ machines</strong> worldwide — this is infrastructure-level software.</p>
+    </div>
+
+    <div style="display:flex;gap:32px;align-items:center;padding:24px 36px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+      <div style="font-size:64px;font-weight:900;color:var(--muted);line-height:1;min-width:60px;">5</div>
+      <p style="font-size:var(--t-body);color:var(--white);line-height:1.4;">Moving fast toward <strong style="color:var(--accent);">virtualization, cloud, and web tooling</strong> — industrial automation closing the gap to mainstream software.</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 16 — RESOURCES
+══════════════════════════════════════════════ -->
+<section data-label="Resources" style="
+  background: linear-gradient(135deg, #07101e 0%, #0b1929 100%);
+  padding: var(--pt) var(--px) var(--pb);
+">
+  <div class="label-chip">Learn More</div>
+  <h2 class="slide-title">Resources &amp; <span class="accent">Next Steps</span></h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:52px;align-items:start;">
+
+    <div style="display:flex;flex-direction:column;gap:24px;">
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:10px;">
+        <div style="min-width:40px;height:40px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;">W</div>
+        <div>
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);margin-bottom:4px;">Official Site</div>
+          <div style="font-size:24px;color:var(--accent);">us.codesys.com</div>
+          <div style="font-size:24px;color:var(--muted);">codesys.com (global)</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:10px;">
+        <div style="min-width:40px;height:40px;background:var(--blue2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;">↓</div>
+        <div>
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);margin-bottom:4px;">Free IDE Download</div>
+          <div style="font-size:24px;color:#60a5fa;">CODESYS Store</div>
+          <div style="font-size:24px;color:var(--muted);">Full-featured, no license required to start</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:10px;">
+        <div style="min-width:40px;height:40px;background:var(--slate);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;">▶</div>
+        <div>
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);margin-bottom:4px;">Video Tutorials</div>
+          <div style="font-size:24px;color:var(--muted);">RealPars CODESYS Basics (YouTube)</div>
+          <div style="font-size:24px;color:var(--muted);">"Book of CODESYS" by Gary Pratt</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:10px;">
+        <div style="min-width:40px;height:40px;background:var(--slate);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;">🎓</div>
+        <div>
+          <div style="font-size:var(--t-small);font-weight:700;color:var(--white);margin-bottom:4px;">CODESYS Academy</div>
+          <div style="font-size:24px;color:var(--muted);">Beginner 20h · Advanced 30h · Visualization 3-day</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- QR / Next steps -->
+    <div style="display:flex;flex-direction:column;gap:24px;">
+      <div style="font-size:var(--t-small);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Suggested Next Steps</div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;gap:16px;align-items:flex-start;padding:18px 20px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;">
+          <div style="color:var(--accent);font-size:24px;font-weight:800;min-width:28px;">→</div>
+          <div style="font-size:var(--t-small);color:var(--white);">Download the free CODESYS Development System — hands-on is the fastest way to understand it.</div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:flex-start;padding:18px 20px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;">
+          <div style="color:var(--accent);font-size:24px;font-weight:800;min-width:28px;">→</div>
+          <div style="font-size:var(--t-small);color:var(--white);">Contact CODESYS Corporation (Boston) to explore partnership or solution integration options for Canada.</div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:flex-start;padding:18px 20px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;">
+          <div style="color:var(--accent);font-size:24px;font-weight:800;min-width:28px;">→</div>
+          <div style="font-size:var(--t-small);color:var(--white);">Review CODESYS go! (2025/26 web IDE) — particularly relevant to our IT-side development team.</div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:flex-start;padding:18px 20px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;">
+          <div style="color:var(--accent);font-size:24px;font-weight:800;min-width:28px;">→</div>
+          <div style="font-size:var(--t-small);color:var(--white);">Identify which of our current PLC / cobot / machine vision projects could connect via OPC UA or MQTT to a CODESYS-compatible backend.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;padding:20px 24px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:24px;font-weight:700;color:var(--white);">Kranti Canada Associates Ltd.</div>
+          <div style="font-size:24px;color:var(--muted);">IoT Research · Industrial Automation</div>
+        </div>
+        <div style="font-size:24px;color:var(--muted);">April 2026</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</deck-stage>
+
+<!-- ══════ TWEAKS PANEL ══════ -->
+<div id="tweaks-panel">
+  <h4>Tweaks</h4>
+  <div class="tweak-row">
+    <label>Accent Color</label>
+    <div class="tweak-swatch-row">
+      <div class="tweak-swatch active" style="background:#f97316;" data-accent="#f97316" data-accent2="#fbbf24" onclick="setAccent(this)"></div>
+      <div class="tweak-swatch" style="background:#22c55e;" data-accent="#22c55e" data-accent2="#86efac" onclick="setAccent(this)"></div>
+      <div class="tweak-swatch" style="background:#06b6d4;" data-accent="#06b6d4" data-accent2="#67e8f9" onclick="setAccent(this)"></div>
+      <div class="tweak-swatch" style="background:#a855f7;" data-accent="#a855f7" data-accent2="#d8b4fe" onclick="setAccent(this)"></div>
+    </div>
+  </div>
+  <div class="tweak-row">
+    <label>Base Darkness</label>
+    <input type="range" min="5" max="30" value="11" id="tweak-darkness" oninput="setDarkness(this.value)"/>
+  </div>
+  <div class="tweak-row">
+    <label>Body Font Size</label>
+    <select onchange="setBodySize(this.value)">
+      <option value="30px">Compact</option>
+      <option value="34px" selected>Default</option>
+      <option value="38px">Large</option>
+    </select>
+  </div>
+</div>
+
+<script>
+// Tweaks
+window.addEventListener('message', e => {
+  if (e.data?.type === '__activate_edit_mode') document.getElementById('tweaks-panel').classList.add('open');
+  if (e.data?.type === '__deactivate_edit_mode') document.getElementById('tweaks-panel').classList.remove('open');
+});
+window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "#f97316",
+  "accentColor2": "#fbbf24",
+  "darkness": 11,
+  "bodySize": "34px"
+}/*EDITMODE-END*/;
+
+function setAccent(el) {
+  document.querySelectorAll('.tweak-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  const a = el.dataset.accent, a2 = el.dataset.accent2;
+  document.documentElement.style.setProperty('--accent', a);
+  document.documentElement.style.setProperty('--accent2', a2);
+  window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { accentColor: a, accentColor2: a2 } }, '*');
+}
+
+function setDarkness(v) {
+  const h = parseInt(v);
+  document.documentElement.style.setProperty('--navy', `oklch(${h}% 0.04 240)`);
+  window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { darkness: h } }, '*');
+}
+
+function setBodySize(v) {
+  document.documentElement.style.setProperty('--t-body', v);
+  window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { bodySize: v } }, '*');
+}
+</script>
+</body>
+</html>

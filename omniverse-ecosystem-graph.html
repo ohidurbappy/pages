@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NVIDIA Omniverse Ecosystem</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Exo+2:wght@400;600&display=swap');
+
+:root {
+  --green: #76b900;
+  --green-glow: rgba(118,185,0,0.25);
+  --bg: #030a06;
+  --panel: rgba(8,20,10,0.92);
+  --text: #dff0b8;
+  --muted: #5a7a30;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  background:var(--bg);
+  font-family:'Exo 2', sans-serif;
+  color:var(--text);
+  overflow:hidden;
+}
+
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image: radial-gradient(rgba(118,185,0,0.12) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events:none;
+  z-index:0;
+}
+
+#graph-svg {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  z-index:1;
+}
+
+#header {
+  position:fixed; top:0; left:0; right:0;
+  padding:14px 24px;
+  background:linear-gradient(to bottom, rgba(3,10,6,0.97) 70%, transparent);
+  display:flex; align-items:center; gap:14px;
+  z-index:10;
+  border-bottom:1px solid rgba(118,185,0,0.12);
+}
+.nv-badge {
+  background:var(--green); color:#000;
+  font-family:'Rajdhani',sans-serif; font-weight:700;
+  font-size:12px; letter-spacing:2px;
+  padding:3px 9px;
+  clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px));
+  flex-shrink:0;
+}
+#title {
+  font-family:'Rajdhani',sans-serif; font-weight:700;
+  font-size:20px; letter-spacing:3px;
+  color:var(--green); text-transform:uppercase;
+}
+#subtitle {
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px; color:var(--muted); letter-spacing:1px;
+}
+#hint {
+  margin-left:auto;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px; color:var(--muted);
+  letter-spacing:1px; text-align:right; flex-shrink:0;
+}
+
+#controls {
+  position:fixed; top:74px; left:20px;
+  display:flex; flex-direction:column; gap:6px;
+  z-index:10;
+}
+.btn {
+  width:34px; height:34px;
+  background:var(--panel);
+  border:1px solid rgba(118,185,0,0.3);
+  color:var(--green);
+  font-family:'Share Tech Mono',monospace;
+  font-size:18px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s, border-color 0.2s;
+  clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px));
+}
+.btn:hover { background:rgba(118,185,0,0.18); border-color:var(--green); }
+
+#legend {
+  position:fixed; bottom:20px; left:20px;
+  background:var(--panel);
+  border:1px solid rgba(118,185,0,0.2);
+  padding:14px 18px;
+  z-index:10;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%);
+  backdrop-filter:blur(8px);
+}
+#legend h3 {
+  font-family:'Rajdhani',sans-serif;
+  font-size:10px; letter-spacing:2px;
+  color:var(--green); margin-bottom:8px; text-transform:uppercase;
+}
+.leg { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
+.leg-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.leg span { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); }
+
+#info {
+  position:fixed; top:74px; right:20px;
+  width:260px;
+  background:var(--panel);
+  border:1px solid rgba(118,185,0,0.3);
+  padding:18px; z-index:10;
+  backdrop-filter:blur(10px);
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+  transform:translateX(290px);
+  transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  pointer-events:none;
+}
+#info.open { transform:translateX(0); pointer-events:all; }
+#info-name {
+  font-family:'Rajdhani',sans-serif; font-weight:700;
+  font-size:17px; color:var(--green); margin-bottom:2px;
+}
+#info-cat {
+  font-family:'Share Tech Mono',monospace; font-size:9px;
+  color:var(--muted); letter-spacing:2px; text-transform:uppercase;
+  padding-bottom:10px; border-bottom:1px solid rgba(118,185,0,0.15);
+  margin-bottom:10px;
+}
+#info-desc { font-size:11.5px; line-height:1.7; color:rgba(223,240,184,0.85); }
+
+#stats {
+  position:fixed; bottom:20px; right:20px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px; color:var(--muted);
+  text-align:right; letter-spacing:1px; z-index:10;
+}
+
+@keyframes pulse {
+  0%   { r:38; opacity:0.5; }
+  100% { r:80; opacity:0; }
+}
+.pulse-ring { animation: pulse 2.8s ease-out infinite; }
+</style>
+</head>
+<body>
+
+<svg id="graph-svg"></svg>
+
+<header id="header">
+  <div class="nv-badge">NVIDIA</div>
+  <div>
+    <div id="title">Omniverse Ecosystem</div>
+    <div id="subtitle">INTERACTIVE KNOWLEDGE GRAPH · PHYSICAL AI PLATFORM · 2025–2026</div>
+  </div>
+  <div id="hint">DRAG · SCROLL TO ZOOM · CLICK NODE</div>
+</header>
+
+<div id="controls">
+  <button class="btn" id="zin">+</button>
+  <button class="btn" id="zout">−</button>
+  <button class="btn" id="zreset" style="font-size:13px">⟳</button>
+</div>
+
+<div id="legend">
+  <h3>Categories</h3>
+  <div id="leg-items"></div>
+</div>
+
+<div id="info">
+  <div id="info-name">—</div>
+  <div id="info-cat">—</div>
+  <div id="info-desc">Click any node to see details.</div>
+</div>
+
+<div id="stats">
+  <div id="sn"></div>
+  <div id="sl"></div>
+</div>
+
+<script>
+const CAT = {
+  root:       { color:'#76b900', label:'Core Platform' },
+  foundation: { color:'#00c8ff', label:'Foundation / OpenUSD' },
+  sdk:        { color:'#ff6b35', label:'SDKs & Dev Tools' },
+  ai:         { color:'#c77dff', label:'AI Models' },
+  library:    { color:'#ffd166', label:'Libraries' },
+  blueprint:  { color:'#06d6a0', label:'Blueprints' },
+  connector:  { color:'#ef476f', label:'Connectors' },
+  industry:   { color:'#118ab2', label:'Industries & Use Cases' },
+  cloud:      { color:'#fd9e02', label:'Cloud & Infrastructure' },
+};
+
+const NODES = [
+  { id:'omniverse',  label:'NVIDIA\nOMNIVERSE', cat:'root', r:36,
+    desc:'NVIDIA Omniverse is the physical AI operating system — a collection of libraries, microservices, and tools built on OpenUSD. It enables real-time simulation, digital twins, and generative AI for industrial and robotics applications globally.' },
+  { id:'openusd',    label:'OpenUSD', cat:'foundation', r:22,
+    desc:'Universal Scene Description (OpenUSD) — the open-source 3D framework from Pixar. The backbone of Omniverse: enables interoperability, collaboration, and composition across all 3D tools. SimReady USD assets are physics-accurate.' },
+  { id:'physx',      label:'PhysX', cat:'foundation', r:16,
+    desc:'NVIDIA PhysX provides high-fidelity real-time physics — rigid body, soft body, particle cloth, fluids, and destruction — powering all physically accurate simulation inside Omniverse-based applications.' },
+  { id:'rtx_render', label:'NVIDIA RTX\nRendering', cat:'foundation', r:16,
+    desc:'NVIDIA RTX enables physically based, real-time ray tracing and path tracing inside Omniverse. Powers the RTX Sensor Simulation library and all photorealistic rendering pipelines.' },
+  { id:'simready',   label:'SimReady\nAssets', cat:'foundation', r:13,
+    desc:'NVIDIA\'s standard for 3D assets that are physics-accurate, properly structured, and ready for simulation. Partners like Vertiv, Schneider Electric, Delta Electronics, and Siemens contribute SimReady models for digital twins.' },
+  { id:'kit_sdk',    label:'Kit SDK', cat:'sdk', r:20,
+    desc:'The Omniverse Kit SDK is the primary framework for building OpenUSD-native applications and extensions in Python and C++. It includes rendering, physics, UI, scripting, and an extensive extension library.' },
+  { id:'web_sdk',    label:'Web SDK', cat:'sdk', r:13,
+    desc:'Lets developers build browser-based applications that stream Kit Apps via WebRTC — enabling interactive 3D experiences in a web browser without a local GPU.' },
+  { id:'usd_xchg',   label:'OpenUSD\nExchange SDK', cat:'sdk', r:13,
+    desc:'Allows developers to build custom USD I/O plugins that produce consistent, correct USD assets across different 3D ecosystems and DCC tools.' },
+  { id:'code_ide',   label:'Omniverse\nCode', cat:'sdk', r:14,
+    desc:'An integrated development environment (IDE) for Omniverse — build extensions, apps, and microservices. Includes built-in access to Replicator for synthetic data generation workflows.' },
+  { id:'farm',       label:'Omniverse\nFarm', cat:'sdk', r:12,
+    desc:'Distributed compute tool for running large-scale rendering and simulation jobs across GPU farm infrastructure in Omniverse workflows.' },
+  { id:'nucleus',    label:'Nucleus\nServer', cat:'sdk', r:15,
+    desc:'Enterprise Nucleus Server is Omniverse\'s collaboration and asset management backbone — cloud-native APIs for managing, storing, and synchronizing OpenUSD asset data across teams.' },
+  { id:'replicator', label:'Replicator', cat:'sdk', r:14,
+    desc:'Framework for generating physically accurate 3D synthetic data to train and validate AI perception models. Lets developers build domain-specific synthetic data engines for robotics, AV, and manufacturing.' },
+  { id:'deepsearch', label:'DeepSearch', cat:'sdk', r:12,
+    desc:'AI-powered search for querying massive untagged 3D asset libraries using natural language or images. Used by Industrial Light & Magic to navigate hundreds of thousands of environment assets.' },
+  { id:'omnigraph',  label:'OmniGraph', cat:'sdk', r:12,
+    desc:'Visual behavior graph system inside Omniverse for controlling simulation logic, animations, and automation pipelines without writing raw code.' },
+  { id:'isaac_sim',  label:'Isaac Sim', cat:'sdk', r:18,
+    desc:'The primary Omniverse robotics simulation application. GPU-accelerated, physically accurate simulation for training, testing, and validating autonomous robots before hardware deployment.' },
+  { id:'isaac_lab',  label:'Isaac Lab', cat:'sdk', r:14,
+    desc:'Built on Isaac Sim — a framework for robot learning via reinforcement learning, imitation learning, and motion generation at scale. Integrated with GR00T foundation models.' },
+  { id:'machinima',  label:'Machinima', cat:'sdk', r:11,
+    desc:'App for creating 3D cinematics and animated films using game assets, with AI-powered animation tools like Audio2Gesture for body motion generation.' },
+  { id:'cosmos',     label:'NVIDIA\nCosmos', cat:'ai', r:22,
+    desc:'NVIDIA Cosmos is a World Foundation Model (WFM) platform. Generates photorealistic world states from multimodal inputs. Cosmos Transfer converts Omniverse simulations into photorealistic synthetic training data for robots.' },
+  { id:'groot',      label:'Isaac GR00T', cat:'ai', r:18,
+    desc:'NVIDIA\'s humanoid robot foundation model. The Isaac GR00T Blueprint generates large-scale synthetic manipulation motion data from Omniverse and Cosmos — cutting robot data collection from hours to minutes.' },
+  { id:'audio2face', label:'Audio2Face', cat:'ai', r:13,
+    desc:'AI tool that generates realistic 3D facial animations — including emotion inference — directly from an audio file. Audio2Gesture extends this to full body motion generation.' },
+  { id:'physicsnemo',label:'PhysicsNeMo', cat:'ai', r:13,
+    desc:'Physics-informed ML framework inside Omniverse. Trains neural surrogate models up to 150× faster than traditional physics solvers. Used by TSMC for thermal simulation of semiconductor fabs.' },
+  { id:'modulus',    label:'Modulus', cat:'ai', r:12,
+    desc:'Physics ML model training framework (precursor to PhysicsNeMo). Models can be 4,000–100,000× faster than high-fidelity simulation. Powers NVIDIA Earth-2 climate simulation.' },
+  { id:'ace',        label:'Avatar Cloud\nEngine (ACE)', cat:'ai', r:13,
+    desc:'Cloud-native AI microservices suite for building and deploying lifelike digital humans and virtual assistants with realistic speech, animation, and conversational AI.' },
+  { id:'lib_rtx',    label:'RTX & Sensor\nSim Lib', cat:'library', r:15,
+    desc:'GPU-accelerated, physically based rendering and sensor-simulation libraries on NVIDIA RTX. Generates synthetic LiDAR, camera, and radar data critical for AV and robotics perception training.' },
+  { id:'newton_lib', label:'Newton\nPhysics Lib', cat:'library', r:14,
+    desc:'USD-native, open-source multiphysics library for scalable robotics and digital twin simulation — built on NVIDIA Warp and OpenUSD. The physics backbone powering Isaac Sim.' },
+  { id:'usd_api',    label:'USD Asset\nAPI', cat:'library', r:12,
+    desc:'Cloud-native APIs for managing, storing, and synchronizing OpenUSD asset data across Omniverse deployments and enterprise workflows.' },
+  { id:'nvcf',       label:'NVCF\nCloud Fns', cat:'library', r:12,
+    desc:'NVIDIA Cloud Functions — core libraries, templates, and tooling for building and deploying scalable custom physical AI microservices on cloud infrastructure.' },
+  { id:'nerf_lib',   label:'3DGS / NeRF\nLibrary', cat:'library', r:12,
+    desc:'APIs, libraries, and datasets for 3D Gaussian Splatting and neural radiance field simulation from real-world data — enabling neural scene representations for digital twins.' },
+  { id:'bp_mega',    label:'Mega\nBlueprint', cat:'blueprint', r:16,
+    desc:'Omniverse Mega tests multi-robot fleets at scale inside industrial digital twins. Simulate coordinated robot behavior across entire factory floors before hardware deployment.' },
+  { id:'bp_factory', label:'AI Factory\nDigital Twin', cat:'blueprint', r:16,
+    desc:'Blueprint for designing entire AI data centers in simulation — unifying power, cooling, networking, and IT in a single OpenUSD-based virtual model on the NVIDIA GB200 NVL72 reference architecture.' },
+  { id:'bp_dsx',     label:'DSX\nBlueprint', cat:'blueprint', r:14,
+    desc:'NVIDIA Omniverse DSX is a blueprint for designing and operating gigawatt-scale AI factories. Includes DSX Boost (efficiency), DSX Flex (renewable energy), and DSX Exchange (IT/OT integration).' },
+  { id:'bp_groot',   label:'GR00T\nBlueprint', cat:'blueprint', r:14,
+    desc:'The Isaac GR00T Blueprint for synthetic manipulation motion generation enables humanoid robotics developers to generate massive training datasets using Omniverse and Cosmos.' },
+  { id:'bp_vss',     label:'VSS\nBlueprint', cat:'blueprint', r:12,
+    desc:'Video Search and Summarization Blueprint — deploys video analytics agents for real-time production monitoring in manufacturing and industrial environments.' },
+  { id:'conn_autodesk', label:'Autodesk\nSuite', cat:'connector', r:14,
+    desc:'USD connectors for Autodesk tools — Maya, 3ds Max, Civil 3D, and Alias. Routes Autodesk design data into Omniverse for simulation, visualization, and digital twin workflows.' },
+  { id:'conn_siemens',  label:'Siemens\nXcelerator', cat:'connector', r:13,
+    desc:'Integration with Siemens Xcelerator — JT format support and Teamcenter PLM for industrial digital twin workflows. Siemens also contributes SimReady assets to the ecosystem.' },
+  { id:'conn_houdini',  label:'SideFX\nHoudini', cat:'connector', r:12,
+    desc:'USD Connector for SideFX Houdini — enables VFX and simulation artists to bring Houdini procedural assets and simulations into Omniverse.' },
+  { id:'conn_blender',  label:'Blender', cat:'connector', r:12,
+    desc:'Open-source 3D DCC connector for Blender — lets creators export and collaborate on Blender scenes within the Omniverse USD ecosystem.' },
+  { id:'conn_unity',    label:'Unity', cat:'connector', r:12,
+    desc:'Connector for Unity game engine — enables asset and scene exchange between Unity and Omniverse for simulation and digital twin development.' },
+  { id:'conn_adobe',    label:'Adobe\nSubstance 3D', cat:'connector', r:12,
+    desc:'Connector for Adobe Substance 3D — routes material and texture workflows into Omniverse with accurate physically based rendering representations.' },
+  { id:'ind_robotics',  label:'Robotics\n& Humanoids', cat:'industry', r:15,
+    desc:'Foxconn, Boston Dynamics, and humanoid companies use Isaac Sim, Isaac Lab, and GR00T to train and test robot arms and full humanoid systems at scale.' },
+  { id:'ind_auto',      label:'Automotive\n& AV', cat:'industry', r:14,
+    desc:'BMW and General Motors use Omniverse for factory simulation, AV perception training, and manufacturing digital twins covering operations like material handling and precision welding.' },
+  { id:'ind_mfg',       label:'Manufacturing\n& Logistics', cat:'industry', r:13,
+    desc:'PepsiCo, Lowe\'s, Kroger, and Unilever use Omniverse to optimize supply chains, store layouts, and product marketing via physically accurate digital twin simulation.' },
+  { id:'ind_energy',    label:'Energy &\nAI Factories', cat:'industry', r:13,
+    desc:'Schneider Electric, Siemens Energy, Eaton, GE Vernova, Hitachi, and Vertiv use Omniverse to design and operate gigawatt-scale AI data centers with unified power and cooling simulation.' },
+  { id:'ind_vfx',       label:'Film / VFX', cat:'industry', r:12,
+    desc:'Industrial Light & Magic uses DeepSearch to navigate hundreds of thousands of environment assets. Omniverse enables collaborative multi-artist 3D film production pipelines via OpenUSD.' },
+  { id:'ind_semi',      label:'Semiconductor\n& Hi-Tech', cat:'industry', r:12,
+    desc:'TSMC uses PhysicsNeMo for thermal simulation 150× faster than traditional solvers. NVIDIA cuLitho accelerates lithography simulation. Full semiconductor process simulations run on CUDA-X libraries.' },
+  { id:'cloud_aws',  label:'AWS', cat:'cloud', r:13,
+    desc:'Omniverse available on AWS EC2 G6e instances with L40S GPUs — enabling cloud-scale deployment of Omniverse applications via the AWS Marketplace.' },
+  { id:'cloud_azure',label:'Microsoft\nAzure', cat:'cloud', r:13,
+    desc:'Azure Arc Jumpstart reference architecture connects Omniverse digital twin models to real-time operational data from Azure IoT services.' },
+  { id:'cloud_ngc',  label:'NGC Catalog', cat:'cloud', r:14,
+    desc:'NVIDIA GPU Cloud (NGC) Catalog hosts all Omniverse Kit apps, tools, templates, connectors, and Enterprise Nucleus Server — the primary software distribution channel.' },
+  { id:'cloud_db',   label:'Databricks', cat:'cloud', r:11,
+    desc:'Databricks integrates Omniverse with the Databricks Data Intelligence Platform to power large-scale synthetic data pipelines for physical AI training at cloud scale.' },
+];
+
+const LINKS = [
+  ['omniverse','openusd'],['omniverse','kit_sdk'],['omniverse','cosmos'],
+  ['omniverse','nucleus'],['omniverse','cloud_ngc'],['omniverse','isaac_sim'],
+  ['omniverse','bp_mega'],['omniverse','bp_factory'],
+  ['omniverse','ind_robotics'],['omniverse','ind_auto'],
+  ['omniverse','ind_mfg'],['omniverse','ind_energy'],
+  ['omniverse','ind_vfx'],['omniverse','ind_semi'],
+  ['omniverse','nvcf'],['omniverse','nerf_lib'],
+  ['openusd','physx'],['openusd','rtx_render'],['openusd','simready'],
+  ['openusd','usd_xchg'],['openusd','newton_lib'],
+  ['openusd','conn_autodesk'],['openusd','conn_siemens'],
+  ['openusd','conn_houdini'],['openusd','conn_blender'],
+  ['openusd','conn_unity'],['openusd','conn_adobe'],
+  ['kit_sdk','code_ide'],['kit_sdk','web_sdk'],['kit_sdk','farm'],
+  ['kit_sdk','replicator'],['kit_sdk','deepsearch'],['kit_sdk','omnigraph'],
+  ['kit_sdk','machinima'],['kit_sdk','ace'],
+  ['code_ide','replicator'],
+  ['isaac_sim','isaac_lab'],['isaac_sim','newton_lib'],
+  ['isaac_lab','groot'],
+  ['cosmos','groot'],['cosmos','bp_groot'],['cosmos','cloud_db'],
+  ['ace','audio2face'],
+  ['omniverse','physicsnemo'],['physicsnemo','modulus'],
+  ['rtx_render','lib_rtx'],['lib_rtx','usd_api'],
+  ['omniverse','bp_dsx'],['omniverse','bp_groot'],['omniverse','bp_vss'],
+  ['bp_mega','isaac_sim'],
+  ['bp_factory','simready'],['bp_dsx','bp_factory'],
+  ['ind_robotics','isaac_sim'],['ind_robotics','groot'],
+  ['ind_auto','replicator'],['ind_auto','ind_robotics'],
+  ['ind_mfg','bp_mega'],
+  ['ind_energy','bp_factory'],['ind_energy','bp_dsx'],
+  ['ind_vfx','deepsearch'],
+  ['ind_semi','physicsnemo'],
+  ['cloud_ngc','cloud_aws'],['cloud_ngc','cloud_azure'],['cloud_ngc','cloud_db'],
+  ['nucleus','cloud_ngc'],
+];
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+let W = window.innerWidth, H = window.innerHeight;
+const svg = d3.select('#graph-svg');
+
+// Filters
+const defs = svg.append('defs');
+[['glow',3],['glow-strong',9]].forEach(([id,sd])=>{
+  const f = defs.append('filter').attr('id',id)
+    .attr('x','-80%').attr('y','-80%').attr('width','260%').attr('height','260%');
+  f.append('feGaussianBlur').attr('stdDeviation',sd).attr('result','b');
+  const m = f.append('feMerge');
+  m.append('feMergeNode').attr('in','b');
+  m.append('feMergeNode').attr('in','SourceGraphic');
+});
+
+const g = svg.append('g');
+
+// IMPORTANT: create link objects first, then pass the SAME array to both simulation and render
+const linkData = LINKS.map(([s,t]) => ({ source:s, target:t }));
+
+const sim = d3.forceSimulation(NODES)
+  .force('link', d3.forceLink(linkData).id(d=>d.id).distance(120).strength(0.45))
+  .force('charge', d3.forceManyBody().strength(d => -d.r * 28))
+  .force('center', d3.forceCenter(W/2, H/2))
+  .force('collide', d3.forceCollide(d=>d.r+18).strength(0.85))
+  .force('x', d3.forceX(W/2).strength(0.03))
+  .force('y', d3.forceY(H/2).strength(0.03));
+
+const rootNode = NODES.find(n=>n.id==='omniverse');
+rootNode.fx = W/2;
+rootNode.fy = H/2;
+
+// Render links
+const linkEl = g.append('g').attr('stroke-linecap','round')
+  .selectAll('line')
+  .data(linkData)
+  .join('line')
+  .attr('stroke', d => {
+    const srcId = typeof d.source === 'object' ? d.source.id : d.source;
+    const sn = NODES.find(n=>n.id===srcId);
+    return CAT[sn?.cat]?.color || '#76b900';
+  })
+  .attr('stroke-opacity', 0.35)
+  .attr('stroke-width', 1.2);
+
+// Pulse rings for center
+const pulseG = g.append('g');
+[0,1].forEach((i)=>{
+  pulseG.append('circle')
+    .attr('class','pulse-ring')
+    .attr('fill','none')
+    .attr('stroke','#76b900')
+    .attr('stroke-width', i===0?1.5:1)
+    .attr('stroke-opacity', i===0?0.6:0.35)
+    .style('animation-delay', i===0?'0s':'1.4s');
+});
+
+// Render nodes
+const nodeG = g.append('g')
+  .selectAll('g')
+  .data(NODES)
+  .join('g')
+  .call(
+    d3.drag()
+      .on('start',(e,d)=>{ if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag', (e,d)=>{ d.fx=e.x; d.fy=e.y; })
+      .on('end',  (e,d)=>{ if(!e.active) sim.alphaTarget(0); if(d.id!=='omniverse'){d.fx=null;d.fy=null;} })
+  )
+  .on('click',(e,d)=>{ e.stopPropagation(); openInfo(d); doHighlight(d); });
+
+// Hex ring on root
+nodeG.filter(d=>d.cat==='root').append('polygon')
+  .attr('points', d=>{
+    return Array.from({length:6},(_,i)=>{
+      const a = Math.PI/3*i - Math.PI/6;
+      return `${(d.r+11)*Math.cos(a)},${(d.r+11)*Math.sin(a)}`;
+    }).join(' ');
+  })
+  .attr('fill','none').attr('stroke','#76b900')
+  .attr('stroke-width',1).attr('stroke-opacity',0.55);
+
+// Node circles
+nodeG.append('circle')
+  .attr('r', d=>d.r)
+  .attr('fill', d => d.cat==='root' ? CAT.root.color : CAT[d.cat].color+'1a')
+  .attr('stroke', d => CAT[d.cat].color)
+  .attr('stroke-width', d => d.cat==='root' ? 2.5 : 1.5)
+  .attr('filter', d => d.cat==='root' ? 'url(#glow-strong)' : 'url(#glow)')
+  .style('cursor','pointer');
+
+// Node labels (multiline via tspan)
+nodeG.each(function(d){
+  const el = d3.select(this);
+  const lines = d.label.split('\n');
+  const fs = d.cat==='root' ? 13 : Math.min(10, d.r * 0.58);
+  const lh = fs * 1.25;
+  const text = el.append('text')
+    .attr('text-anchor','middle')
+    .attr('font-size', fs)
+    .attr('font-weight', d.cat==='root' ? 700 : 600)
+    .attr('fill', d.cat==='root' ? '#000' : '#dff0b8')
+    .attr('font-family', d.cat==='root' ? 'Rajdhani,sans-serif' : 'Exo 2,sans-serif')
+    .style('pointer-events','none');
+
+  const startDy = -(lines.length - 1) / 2 * lh;
+  lines.forEach((line, i) => {
+    text.append('tspan')
+      .attr('x', 0)
+      .attr('dy', i === 0 ? startDy : lh)
+      .text(line);
+  });
+});
+
+// ── TICK ──────────────────────────────────────────────────────────────────
+sim.on('tick', ()=>{
+  linkEl
+    .attr('x1', d=>d.source.x).attr('y1', d=>d.source.y)
+    .attr('x2', d=>d.target.x).attr('y2', d=>d.target.y);
+
+  nodeG.attr('transform', d=>`translate(${d.x ?? 0},${d.y ?? 0})`);
+
+  pulseG.selectAll('.pulse-ring')
+    .attr('cx', rootNode.x ?? W/2)
+    .attr('cy', rootNode.y ?? H/2);
+});
+
+// ── ZOOM ──────────────────────────────────────────────────────────────────
+const zoom = d3.zoom().scaleExtent([0.12, 5])
+  .on('zoom', e=>g.attr('transform', e.transform));
+svg.call(zoom);
+
+document.getElementById('zin').onclick    = ()=>svg.transition().duration(300).call(zoom.scaleBy, 1.3);
+document.getElementById('zout').onclick   = ()=>svg.transition().duration(300).call(zoom.scaleBy, 1/1.3);
+document.getElementById('zreset').onclick = ()=>svg.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
+
+// ── INFO & HIGHLIGHT ──────────────────────────────────────────────────────
+function openInfo(d){
+  document.getElementById('info-name').textContent = d.label.replace('\n',' ');
+  document.getElementById('info-cat').textContent  = CAT[d.cat]?.label || d.cat;
+  document.getElementById('info-desc').textContent = d.desc;
+  document.getElementById('info').classList.add('open');
+}
+
+function doHighlight(d){
+  const conn = new Set([d.id]);
+  linkData.forEach(l=>{
+    const s = l.source.id ?? l.source;
+    const t = l.target.id ?? l.target;
+    if(s===d.id) conn.add(t);
+    if(t===d.id) conn.add(s);
+  });
+  nodeG.select('circle').attr('opacity', n => conn.has(n.id) ? 1 : 0.18);
+  linkEl.attr('stroke-opacity', l=>{
+    const s = l.source.id ?? l.source;
+    const t = l.target.id ?? l.target;
+    return (s===d.id || t===d.id) ? 0.9 : 0.04;
+  });
+}
+
+svg.on('click',()=>{
+  document.getElementById('info').classList.remove('open');
+  nodeG.select('circle').attr('opacity', 1);
+  linkEl.attr('stroke-opacity', 0.35);
+});
+
+// ── LEGEND ────────────────────────────────────────────────────────────────
+const legEl = document.getElementById('leg-items');
+Object.entries(CAT).forEach(([,v])=>{
+  const row = document.createElement('div');
+  row.className = 'leg';
+  row.innerHTML = `<div class="leg-dot" style="background:${v.color};box-shadow:0 0 5px ${v.color}77"></div><span>${v.label}</span>`;
+  legEl.appendChild(row);
+});
+
+document.getElementById('sn').textContent = `NODES: ${NODES.length}`;
+document.getElementById('sl').textContent = `LINKS: ${LINKS.length}`;
+
+// ── RESIZE ────────────────────────────────────────────────────────────────
+window.addEventListener('resize', ()=>{
+  W = window.innerWidth; H = window.innerHeight;
+  rootNode.fx = W/2; rootNode.fy = H/2;
+  sim.force('center', d3.forceCenter(W/2, H/2));
+  sim.force('x', d3.forceX(W/2).strength(0.03));
+  sim.force('y', d3.forceY(H/2).strength(0.03));
+  sim.alpha(0.4).restart();
+});
+</script>
+</body>
+</html>
